@@ -1,6 +1,9 @@
 from pydantic import BaseModel, Field
 from bson import ObjectId
 from typing import Optional
+from app.models.item import PyObjectId
+from datetime import datetime
+
 
 class PyObjectId(ObjectId):
     @classmethod
@@ -16,20 +19,25 @@ class PyObjectId(ObjectId):
     @classmethod
     def __modify_schema__(cls, field_schema):
         field_schema.update(type="string")
-        
 
-class ItemModel(BaseModel):
+class UserModel(BaseModel):
     id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
-    name: str = Field(...)
-    description: Optional[str] = Field(None)
+    first_name: str = Field(...)
+    last_name: str = Field(...)
+    phone_number: int = Field(...)
+    user_type: str = Field(...)
+    created_on: Optional[datetime] = Field(default_factory=datetime.utcnow)
 
     class Config:
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
-        json_encoders = {ObjectId: str}
+        json_encoders = {ObjectId: str, datetime: lambda v: v.isoformat()}
         schema_extra = {
             "example": {
-                "name": "Sample Item",
-                "description": "This is a sample item description."
+                "first_name": "John",
+                "last_name": "Doe",
+                "phone_number": 1234567890,
+                "user_type": "admin",
+                "created_on": "2024-08-31T12:34:56"
             }
         }

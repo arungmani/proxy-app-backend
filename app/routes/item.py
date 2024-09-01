@@ -21,6 +21,7 @@ async def create_item(item: ItemModel):
 @router.get("/", response_description="List all items", response_model=List[ItemModel])
 async def list_items():
     items = await collection.find().to_list(length=100)
+
     return items
 
 @router.get("/{id}", response_description="Get a single item", response_model=ItemModel)
