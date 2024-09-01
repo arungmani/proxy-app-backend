@@ -26,7 +26,7 @@ class UserModel(BaseModel):
     last_name: str = Field(...)
     phone_number: int = Field(...)
     user_type: str = Field(...)
-    created_on: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    created_on: Optional[int] = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
 
     class Config:
         allow_population_by_field_name = True
