@@ -42,6 +42,8 @@ async def update_item(id: str, item: ItemModel):
         return existing_item
     raise HTTPException(status_code=404, detail=f"Item with ID {id} not found")
 
+# Delete a task
+
 @router.delete("/{id}", response_description="Delete an item")
 async def delete_item(id: str):
     delete_result = await collection.delete_one({"_id": ObjectId(id)})

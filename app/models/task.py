@@ -1,31 +1,17 @@
 from pydantic import BaseModel, Field
-from bson import ObjectId
+from bson import ObjectId, Binary, UuidRepresentation
 from typing import Optional
 from datetime import datetime
-
-class PyObjectId(ObjectId):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate
-    
-    @classmethod
-    def validate(cls, v):
-        if not ObjectId.is_valid(v):
-            raise ValueError("Invalid objectid")
-        return ObjectId(v)
-    
-    @classmethod
-    def __modify_schema__(cls, field_schema):
-        field_schema.update(type="string")
+import uuid
 
 class TaskModel(BaseModel):
-    id: PyObjectId = Field(default_factory=PyObjectId, alias="_id")
+    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, alias="_id")
     title: str = Field(...)
     description: Optional[str] = Field(None)
     due_date: Optional[datetime] = Field(None)
     priority: Optional[str] = Field(None)
-    volunteer_id: Optional[PyObjectId] = Field(None)
-    created_by: Optional[PyObjectId] = Field(None)   
+    volunteer_id: Optional[str] = Field(None)
+    created_by: Optional[str] = Field(None)
     created_on: Optional[int] = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
     confirmed_on: Optional[int] = Field(None)
     completed_on: Optional[int] = Field(None)
@@ -36,7 +22,6 @@ class TaskModel(BaseModel):
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
         json_encoders = {
-            ObjectId: str,
             datetime: lambda v: v.isoformat()
         }
         schema_extra = {
@@ -54,3 +39,5 @@ class TaskModel(BaseModel):
                 "is_completed": False
             }
         }
+
+# Now, when inserting a TaskModel instance into MongoDB, the UUID will be properly encoded.
