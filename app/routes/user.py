@@ -1,65 +1,78 @@
 from fastapi import APIRouter, HTTPException, status
 from typing import List
 from app.models.user import UserModel
-from app.db.database import db
-from bson import ObjectId
+from app.services.user_service import (
+    create_user,
+    list_users,
+    get_user_by_id,
+    update_user_by_id,
+    delete_user_by_id,
+)
+from uuid import UUID
 
 router = APIRouter(
     tags=["User"],
     responses={404: {"description": "Not found"}}
 )
 
-collection = db.get_collection("users_collection")
-
 # Register User
 
-@router.post('/user/register',response_model=UserModel)
+@router.post('/user/register', response_model=UserModel)
 async def user_registration(data: UserModel):
-    userData= data.dict(by_alias=True)
-    result = await collection.insert_one(userData)
-    registered_user = await collection.find_one({"_id": result.inserted_id})
+    registered_user = await create_user(data)
     return registered_user
-
 
 # List all users
 
-@router.get("/user/list" ,response_model=List[UserModel])
-async def list_users():
-    users = await collection.find().to_list(length=100)
+@router.get("/user/list", response_model=List[UserModel])
+async def list_all_users():
+    users = await list_users()
     return users
- 
 
 # Get a single User
 
-@router.get("/user/get/{id}", response_description="Get a single item", response_model=UserModel)
-async def get_user(id: str):
-    if (user:= await collection.find_one({"_id": ObjectId(id)})) is not None:
+@router.get("/user/get/{id}", response_description="Get a single user", response_model=UserModel)
+async def get_single_user(id: str):
+    try:
+        user_id = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
+    
+    user = await get_user_by_id(user_id)
+    if user:
         return user
-    raise HTTPException(status_code=404, detail=f"Item with ID {id} not found")
-
+    
+    raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
 
 # Update the user
 
-@router.put("/user/update/{id}", response_description="Update an user", response_model=UserModel)
-async def update_item(id: str, userData: UserModel):
-    filterData = {k: v for k, v in userData.dict().items() if v is not None}
-    if len(filterData) >= 1:
-        update_result = await collection.update_one({"_id": ObjectId(id)}, {"$set": filterData})
-        if update_result.modified_count == 1:
-            if (updated_user := await collection.find_one({"_id": ObjectId(id)})) is not None:
-                return updated_user
-    if (existing_item := await collection.find_one({"_id": ObjectId(id)})) is not None:
-        return existing_item
-    raise HTTPException(status_code=404, detail=f"Item with ID {id} not found")
+@router.put("/user/update/{id}", response_description="Update a user", response_model=UserModel)
+async def update_single_user(id: str, user_data: UserModel):
+    try:
+        user_id = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
 
-
+    filter_data = {k: v for k, v in user_data.dict(by_alias=True).items() if v is not None and k != "_id"}
+    
+    if filter_data:
+        updated_user = await update_user_by_id(user_id, filter_data)
+        if updated_user:
+            return updated_user
+    
+    raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
 
 # Delete a User
 
 @router.delete("/user/delete/{id}")
-async def delete_user(id:str):
-    delete_result=await collection.delete_one({"_id": ObjectId(id)})
-    if delete_result.deleted_count == 1:
-        return {"message": f"Item with ID {id} has been deleted"}
-    raise HTTPException(status_code=404, detail=f"Item with ID {id} not found")
-  
+async def delete_single_user(id: str):
+    try:
+        user_id = UUID(id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid UUID format")
+    
+    is_deleted = await delete_user_by_id(user_id)
+    if is_deleted:
+        return {"message": f"User with ID {id} has been deleted"}
+    
+    raise HTTPException(status_code=404, detail=f"User with ID {id} not found")

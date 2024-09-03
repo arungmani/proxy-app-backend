@@ -40,4 +40,3 @@ class TaskModel(BaseModel):
             }
         }
 
-# Now, when inserting a TaskModel instance into MongoDB, the UUID will be properly encoded.
