@@ -7,6 +7,7 @@ from app.services.user_service import (
     get_user_by_id,
     update_user_by_id,
     delete_user_by_id,
+    login_user
 )
 from uuid import UUID
 
@@ -19,8 +20,14 @@ router = APIRouter(
 
 @router.post('/user/register', response_model=UserModel)
 async def user_registration(data: UserModel):
+    print("THE DATA IA",data)
     registered_user = await create_user(data)
     return registered_user
+
+@router.post("/user/signin",)
+async def user_signIn(data:UserModel):
+    result=await login_user(data)
+    return result
 
 # List all users
 

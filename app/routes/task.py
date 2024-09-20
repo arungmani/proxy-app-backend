@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, status, Depends,Query
 from typing import List
 from app.models.task import TaskModel
 from app.services.task_service import (
@@ -9,6 +9,7 @@ from app.services.task_service import (
     delete_task_by_id,
 )
 from uuid import UUID
+from app.common.helper import verify_jwt
 
 router = APIRouter(
     tags=["Task"],
@@ -18,15 +19,17 @@ router = APIRouter(
 # Create Task
 
 @router.post('/task/create', response_model=TaskModel)
-async def register_task(data: TaskModel):
+async def register_task(data: TaskModel,user: dict = Depends(verify_jwt)):
+    data.user_id = user  # Assuming 'id' is a part of the JWT payload
+    print(data)
     registered_task = await create_task(data)
     return registered_task
 
 # List all tasks
 
-@router.get("/task/list", response_model=List[TaskModel])
-async def list_all_tasks():
-    tasks = await list_tasks()
+@router.get("/task/list/{type}", response_model=List[TaskModel])
+async def list_all_tasks(type:str,user: dict = Depends(verify_jwt)):
+    tasks = await list_tasks(user,type)
     return tasks
 
 # Get a single Task
@@ -44,16 +47,25 @@ async def get_single_task(id: str):
     
     raise HTTPException(status_code=404, detail=f"Task with ID {id} not found")
 
+
 # Update a Task
 
 @router.put("/task/update/{id}", response_description="Update a task", response_model=TaskModel)
-async def update_single_task(id: str, task_data: TaskModel):
+async def update_single_task(
+    id: str,
+    task_data: TaskModel,
+    type: str = Query(...),
+    user: dict = Depends(verify_jwt),
+  
+    ):
     try:
         task_id = UUID(id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
-
-    filter_data = {k: v for k, v in task_data.dict(by_alias=True).items() if v is not None and k != "_id"}
+    if type!="assign":
+        filter_data = {k: v for k, v in task_data.dict(by_alias=True).items() if v is not None and k != "_id"}
+    else:
+        filter_data={'volunteer_id':user}
     
     if filter_data:
         updated_task = await update_task_by_id(task_id, filter_data)
