@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends,Query
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List
 from app.models.task import TaskModel
 from app.services.task_service import (
@@ -11,70 +11,85 @@ from app.services.task_service import (
 from uuid import UUID
 from app.common.helper import verify_jwt
 
-router = APIRouter(
-    tags=["Task"],
-    responses={404: {"description": "Not found"}}
-)
+from app.services.task_service import addJobtoQueue
+
+router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 
 # Create Task
 
-@router.post('/task/create', response_model=TaskModel)
-async def register_task(data: TaskModel,user: dict = Depends(verify_jwt)):
+
+@router.post("/task/create", response_model=TaskModel)
+async def register_task(data: TaskModel, user: dict = Depends(verify_jwt)):
     data.user_id = user  # Assuming 'id' is a part of the JWT payload
     print(data)
     registered_task = await create_task(data)
+    await addJobtoQueue(registered_task,user)
     return registered_task
+
 
 # List all tasks
 
+
 @router.get("/task/list/{type}", response_model=List[TaskModel])
-async def list_all_tasks(type:str,user: dict = Depends(verify_jwt)):
-    tasks = await list_tasks(user,type)
+async def list_all_tasks(type: str, user: dict = Depends(verify_jwt)):
+    tasks = await list_tasks(user, type)
     return tasks
+
 
 # Get a single Task
 
-@router.get("/task/get/{id}", response_description="Get a single task", response_model=TaskModel)
+
+@router.get(
+    "/task/get/{id}", response_description="Get a single task", response_model=TaskModel
+)
 async def get_single_task(id: str):
     try:
         task_id = UUID(id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
-    
+
     task = await get_task_by_id(task_id)
     if task:
         return task
-    
+
     raise HTTPException(status_code=404, detail=f"Task with ID {id} not found")
 
 
 # Update a Task
 
-@router.put("/task/update/{id}", response_description="Update a task", response_model=TaskModel)
+
+@router.put(
+    "/task/update/{id}", response_description="Update a task", response_model=TaskModel
+)
 async def update_single_task(
     id: str,
     task_data: TaskModel,
     type: str = Query(...),
     user: dict = Depends(verify_jwt),
-  
-    ):
+):
     try:
         task_id = UUID(id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
-    if type!="assign":
-        filter_data = {k: v for k, v in task_data.dict(by_alias=True).items() if v is not None and k != "_id"}
+    if type != "assign":
+        filter_data = {
+            k: v
+            for k, v in task_data.dict(by_alias=True).items()
+            if v is not None and k != "_id"
+        }
     else:
-        filter_data={'volunteer_id':user}
-    
+        filter_data = {"volunteer_id": user}
+
     if filter_data:
         updated_task = await update_task_by_id(task_id, filter_data)
         if updated_task:
             return updated_task
-    
+
     raise HTTPException(status_code=404, detail=f"Task with ID {id} not found")
 
+
 # Delete a Task
+
 
 @router.delete("/task/delete/{id}")
 async def delete_single_task(id: str):
@@ -82,9 +97,9 @@ async def delete_single_task(id: str):
         task_id = UUID(id)
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
-    
+
     is_deleted = await delete_task_by_id(task_id)
     if is_deleted:
         return {"message": f"Task with ID {id} has been deleted"}
-    
+
     raise HTTPException(status_code=404, detail=f"Task with ID {id} not found")

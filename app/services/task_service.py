@@ -1,7 +1,8 @@
 from app.models.task import TaskModel
 from app.db.database import db
 from uuid import UUID
-
+from app.services.user_service import get_user_by_id
+from app.services.queueService import add_data
 
 
 collection = db.get_collection("tasks_collection")
@@ -13,43 +14,52 @@ async def create_task(task_data: TaskModel):
     return await collection.find_one({"_id": result.inserted_id})
 
 
-
-
 async def list_tasks(user: str, type: str):
     print(user, type)
-    
+
     # Handle the "all_tasks" case where both conditions must be satisfied
     if type == "all_tasks":
-        tasks = await collection.find({
-            "$and": [
-                {"user_id": {"$ne": user}},
-                {"volunteer_id": {"$ne": user}}
-            ]
-        }).to_list(length=100)
+        tasks = await collection.find(
+            {"$and": [{"user_id": {"$ne": user}}, {"volunteer_id": {"$ne": user}}]}
+        ).to_list(length=100)
         return tasks
-    
+
     # Handle the "user_tasks" case
-    elif type == 'user_tasks':
+    elif type == "user_tasks":
         user_tasks = await collection.find({"user_id": user}).to_list(length=100)
         return user_tasks
 
     # Optionally, handle unknown types
     raise ValueError(f"Unknown task type: {type}")
 
- 
 
 async def get_task_by_id(task_id: UUID):
     return await collection.find_one({"_id": task_id})
 
 
-                                            
 async def update_task_by_id(task_id: UUID, update_data: dict):
-    print("UPDATED DATA",task_id)
+    print("UPDATED DATA", task_id)
     result = await collection.update_one({"_id": task_id}, {"$set": update_data})
     if result.modified_count == 1:
         return await get_task_by_id(task_id)
     return await get_task_by_id(task_id)
 
+
 async def delete_task_by_id(task_id: UUID):
     result = await collection.delete_one({"_id": task_id})
     return result.deleted_count == 1
+
+
+async def addJobtoQueue(task, user_id):
+  
+    user = await get_user_by_id(UUID(user_id))
+    print("USER",user)
+
+    class data:
+        def __init__(self) -> None:
+            self.task_name = task["title"]
+            self.user = user["first_name"]
+
+    add_data(data)
+
+    return
