@@ -11,7 +11,9 @@ from app.services.task_service import (
 from uuid import UUID
 from app.common.helper import verify_jwt
 
+
 from app.services.task_service import addJobtoQueue
+from app.services.queueService import consume_queue
 
 router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 
@@ -19,12 +21,13 @@ router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 
 
 @router.post("/task/create", response_model=TaskModel)
-async def register_task(data: TaskModel, user: dict = Depends(verify_jwt)):
+async def register_task(data: TaskModel, user: dict = Depends(verify_jwt), sid: str = Query(...)):
     data.user_id = user  # Assuming 'id' is a part of the JWT payload
     print(data)
-    registered_task = await create_task(data)
-    await addJobtoQueue(registered_task,user)
-    return registered_task
+    registered_task = await create_task(data,sid)
+    await addJobtoQueue(registered_task,user,sid)
+    await consume_queue()
+    return registered_task 
 
 
 # List all tasks

@@ -8,7 +8,7 @@ from app.services.queueService import add_data
 collection = db.get_collection("tasks_collection")
 
 
-async def create_task(task_data: TaskModel):
+async def create_task(task_data: TaskModel, sid: str):
     task_dict = task_data.dict(by_alias=True)
     result = await collection.insert_one(task_dict)
     return await collection.find_one({"_id": result.inserted_id})
@@ -50,16 +50,23 @@ async def delete_task_by_id(task_id: UUID):
     return result.deleted_count == 1
 
 
-async def addJobtoQueue(task, user_id):
-  
+async def addJobtoQueue(task, user_id, sid):
     user = await get_user_by_id(UUID(user_id))
-    print("USER",user)
+    print("USER", user)
 
-    class data:
+    class Data:
         def __init__(self) -> None:
             self.task_name = task["title"]
             self.user = user["first_name"]
+            self.sid = sid
 
-    add_data(data)
+    # Create an instance of the Data class
+    data_instance = Data()
+
+    # Print the data attributes
+    print("The data is", data_instance.__dict__)
+
+    # Add data to the queue 
+    add_data(data_instance)
 
     return
