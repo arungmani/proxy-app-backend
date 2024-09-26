@@ -3,13 +3,13 @@ import json
 from app.services.socket import sio
 
 
- # Establish a connection to RabbitMQ
-connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.48"))
+# Establish a connection to RabbitMQ
+# connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.37"))
 
-channel = connection.channel()
+# channel = connection.channel()
 
-# Declare the queue
-channel.queue_declare(queue="message_queue")
+# # Declare the queue
+# channel.queue_declare(queue="message_queue")
 
 
 def add_data(data_instance):

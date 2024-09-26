@@ -10,8 +10,6 @@ from app.services.task_service import (
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
-
-
 from app.services.task_service import addJobtoQueue
 from app.services.queueService import consume_queue
 
@@ -25,8 +23,7 @@ async def register_task(data: TaskModel, user: dict = Depends(verify_jwt), sid: 
     data.user_id = user  # Assuming 'id' is a part of the JWT payload
     print(data)
     registered_task = await create_task(data,sid)
-    await addJobtoQueue(registered_task,user,sid)
-    await consume_queue()
+    # await addJobtoQueue(registered_task,user,sid)
     return registered_task 
 
 
