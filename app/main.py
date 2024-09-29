@@ -5,6 +5,7 @@ from app.routes import task
 import socketio
 from app.services.queueService import consume_queue
 from app.services.socket import sio
+import threading
 
 
 
@@ -29,3 +30,8 @@ app.include_router(task.router, prefix="/api/v1")
 socket_app = socketio.ASGIApp(sio)
 
 app.mount("/", socket_app)
+
+
+consumer_thread = threading.Thread(target=consume_queue)
+consumer_thread.daemon = True  # This ensures the thread exits when the main program does
+consumer_thread.start()

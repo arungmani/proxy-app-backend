@@ -2,7 +2,7 @@ from app.models.task import TaskModel
 from app.db.database import db
 from uuid import UUID
 from app.services.user_service import get_user_by_id
-from app.services.queueService import add_data
+from app.services.queueService import add_data_to_Broadcastqueue
 
 
 collection = db.get_collection("tasks_collection")
@@ -52,9 +52,8 @@ async def delete_task_by_id(task_id: UUID):
 
 
 
-async def addJobtoQueue(task, user_id, sid):
+async def sendBroadcastMessage(task, user_id, sid):
     user = await get_user_by_id(UUID(user_id))
-    print("USER", user)
 
     class Data:
         def __init__(self) -> None:
@@ -64,11 +63,10 @@ async def addJobtoQueue(task, user_id, sid):
 
     # Create an instance of the Data class
     data_instance = Data()
-
     # Print the data attributes
     print("The data is", data_instance.__dict__)
 
     # Add data to the queue 
-    add_data(data_instance)
+    add_data_to_Broadcastqueue(data_instance)
 
     return

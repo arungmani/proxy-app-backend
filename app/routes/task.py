@@ -7,10 +7,10 @@ from app.services.task_service import (
     get_task_by_id,
     update_task_by_id,
     delete_task_by_id,
+    sendBroadcastMessage
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
-from app.services.task_service import addJobtoQueue
 from app.services.queueService import consume_queue
 
 router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
@@ -23,7 +23,7 @@ async def register_task(data: TaskModel, user: dict = Depends(verify_jwt), sid: 
     data.user_id = user  # Assuming 'id' is a part of the JWT payload
     print(data)
     registered_task = await create_task(data,sid)
-    # await addJobtoQueue(registered_task,user,sid)
+    await sendBroadcastMessage(registered_task,user,sid)
     return registered_task 
 
 

@@ -1,46 +1,61 @@
 import pika
 import json
 from app.services.socket import sio
+import asyncio
+import time
+from app.services.socket import broadcast_message
 
+def connectRabbitMq():
+    try:
+        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.43.219"))
+        channel = connection.channel()
+        return channel, connection
+    except pika.exceptions.AMQPConnectionError as e:
+        print(f"Connection to RabbitMQ failed: {e}. Retrying...")
+        return None, None  # Return None if connection fails
 
-# Establish a connection to RabbitMQ
-# connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.37"))
+def add_data_to_Broadcastqueue(data_instance):
+    channel, connection = connectRabbitMq()
+    if not channel or not connection:
+        print("Failed to connect to RabbitMQ. Cannot send message.")
+        return
 
-# channel = connection.channel()
-
-# # Declare the queue
-# channel.queue_declare(queue="message_queue")
-
-
-def add_data(data_instance):
-    # Convert the instance's data to JSON
-    message = json.dumps(data_instance.__dict__)
-    # Publish the message to the queue
-    channel.basic_publish(exchange="", routing_key="message_queue", body=message)
-    print(" [x] Sent message:", message)
-    
-    return
+    try:
+        channel.queue_declare(queue="broadcast_queue")
+        message = json.dumps(data_instance.__dict__)
+        channel.basic_publish(exchange="", routing_key="broadcast_queue", body=message)
+        print(" [x] Sent message:", message)
+    except pika.exceptions.AMQPError as e:
+        print(f"Failed to publish message: {e}")
+    finally:
+        connection.close()
 
 
 def callback(ch, method, properties, body):
-    # Decode the body and parse JSON
     data = json.loads(body.decode('utf-8'))
     print(f" [x] Received {data}")
-    sio.emit(
-        "task_notification",
-        {"message": f"New task {data['task_name']} added by {data['user']}"},
-        broadcast=True,
-        skip_sid=data['sid'],  # Ensure 'sid' is part of your message
-    )
-    
-    
+    asyncio.run(broadcast_message(data))
 
-async def consume_queue():
-    channel.basic_consume(
-        queue="message_queue", auto_ack=True, on_message_callback=callback
-    )
-    print(" [*] Waiting for messages. To exit press CTRL+C")
-    channel.start_consuming()
+def consume_queue():
+    while True:  # Keep trying to consume even after failure
+        channel, connection = connectRabbitMq()
+        if not channel or not connection:
+            time.sleep(5)
+            continue  # Retry after a delay if connection fails
 
-    connection.close()
-    return
+        try:
+            channel.queue_declare(queue="broadcast_queue")
+            channel.basic_consume(
+                queue="broadcast_queue", auto_ack=True, on_message_callback=callback
+            )
+            print(" [*] Waiting for messages. To exit press CTRL+C")
+            channel.start_consuming()
+        except pika.exceptions.StreamLostError as e:
+            print(f"Stream lost, reconnecting: {e}")
+            time.sleep(5)  # Wait before retrying
+        except pika.exceptions.AMQPConnectionError as e:
+            print(f"Connection error: {e}")
+            time.sleep(5)  # Wait before retrying
+        finally:
+            if connection:
+                connection.close()
