@@ -7,7 +7,7 @@ from app.services.task_service import (
     get_task_by_id,
     update_task_by_id,
     delete_task_by_id,
-    sendBroadcastMessage
+    sendBroadcastMessage,
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
@@ -19,12 +19,14 @@ router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 
 
 @router.post("/task/create", response_model=TaskModel)
-async def register_task(data: TaskModel, user: dict = Depends(verify_jwt), sid: str = Query(...)):
+async def register_task(
+    data: TaskModel, user: dict = Depends(verify_jwt), sid: str = Query(...)
+):
     data.user_id = user  # Assuming 'id' is a part of the JWT payload
     print(data)
-    registered_task = await create_task(data,sid)
-    await sendBroadcastMessage(registered_task,user,sid)
-    return registered_task 
+    registered_task = await create_task(data, sid)
+    await sendBroadcastMessage(registered_task, user, sid)
+    return registered_task
 
 
 # List all tasks
@@ -77,8 +79,10 @@ async def update_single_task(
             for k, v in task_data.dict(by_alias=True).items()
             if v is not None and k != "_id"
         }
-    else:
+    elif type == "assign":
         filter_data = {"volunteer_id": user}
+    elif type == "unassign":
+        filter_data = {"volunteer_id": None}
 
     if filter_data:
         updated_task = await update_task_by_id(task_id, filter_data)

@@ -17,20 +17,24 @@ async def create_task(task_data: TaskModel, sid: str):
 async def list_tasks(user: str, type: str):
     print(user, type)
 
-    # Handle the "all_tasks" case where both conditions must be satisfied
+    # Define a base query
+    query = {}
+
+    # Modify the query based on the "type"
     if type == "all_tasks":
-        tasks = await collection.find(
-            {"$and": [{"user_id": {"$ne": user}}, {"volunteer_id": {"$ne": user}}]}
-        ).to_list(length=100)
-        return tasks
-
-    # Handle the "user_tasks" case
+        query = {"$and": [{"user_id": {"$ne": user}}, {"volunteer_id": {"$ne": user}}]}
     elif type == "user_tasks":
-        user_tasks = await collection.find({"user_id": user}).to_list(length=100)
-        return user_tasks
+        query = {"user_id": user}
+    elif type == "assigned_tasks":
+        query = {"volunteer_id": user}
+    else:
+        # Optionally, handle unknown types
+        raise ValueError(f"Unknown task type: {type}")
 
-    # Optionally, handle unknown types
-    raise ValueError(f"Unknown task type: {type}")
+    # Execute the query
+    tasks = await collection.find(query).sort("created_on", -1).to_list(length=100)
+
+    return tasks
 
 
 async def get_task_by_id(task_id: UUID):
@@ -50,8 +54,6 @@ async def delete_task_by_id(task_id: UUID):
     return result.deleted_count == 1
 
 
-
-
 async def sendBroadcastMessage(task, user_id, sid):
     user = await get_user_by_id(UUID(user_id))
 
@@ -66,7 +68,7 @@ async def sendBroadcastMessage(task, user_id, sid):
     # Print the data attributes
     print("The data is", data_instance.__dict__)
 
-    # Add data to the queue 
+    # Add data to the queue
     add_data_to_Broadcastqueue(data_instance)
 
     return
