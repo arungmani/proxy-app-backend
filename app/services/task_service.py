@@ -61,6 +61,7 @@ async def sendBroadcastMessage(task, user_id, sid):
         def __init__(self) -> None:
             self.task_name = task["title"]
             self.user = user["first_name"]
+            self.created_at=user["created_on"]
             self.sid = sid
 
     # Create an instance of the Data class
