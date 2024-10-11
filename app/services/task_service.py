@@ -22,9 +22,9 @@ async def list_tasks(user: str, type: str):
 
     # Modify the query based on the "type"
     if type == "all_tasks":
-        query = {"$and": [{"user_id": {"$ne": user}}, {"volunteer_id": {"$ne": user}}]}
+        query = {"$and": [{"created_by": {"$ne": user}}, {"volunteer_id": {"$ne": user}}]}
     elif type == "user_tasks":
-        query = {"user_id": user}
+        query = {"created_by": user}
     elif type == "assigned_tasks":
         query = {"volunteer_id": user}
     else:

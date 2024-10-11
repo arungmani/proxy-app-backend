@@ -22,7 +22,7 @@ router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 async def register_task(
     data: TaskModel, user: dict = Depends(verify_jwt), sid: str = Query(...)
 ):
-    data.user_id = user  # Assuming 'id' is a part of the JWT payload
+    data.created_by = user  # Assuming 'id' is a part of the JWT payload
     print(data)
     registered_task = await create_task(data, sid)
     await sendBroadcastMessage(registered_task, user, sid)
