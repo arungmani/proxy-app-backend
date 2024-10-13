@@ -3,6 +3,8 @@ from app.db.database import db
 from uuid import UUID
 from datetime import datetime
 from datetime import timedelta
+from fastapi import  HTTPException
+
 
 import jwt
 import bcrypt
@@ -39,7 +41,8 @@ async def login_user(credentials):
         # Raise an exception for invalid password
         raise ValueError("Invalid credentials")
     # Raise an exception for user not found
-    raise ValueError("User not found")
+    raise HTTPException(status_code=404, detail=f"user not found")
+
 
 async def list_users():
     return await collection.find().to_list(length=100)
