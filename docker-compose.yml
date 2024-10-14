@@ -8,10 +8,13 @@ services:
       - "8000:8000"
     depends_on:
       - mongo
+      - rabbitmq
     environment:
       - MONGO_URI=mongodb://mongo:27017/test_db
+      - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/
     volumes:
       - .:/app
+
   mongo:
     image: mongo:6.0
     container_name: mongo
@@ -20,6 +23,14 @@ services:
       - "27017:27017"
     volumes:
       - mongo_data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    restart: always
 
 volumes:
   mongo_data:
