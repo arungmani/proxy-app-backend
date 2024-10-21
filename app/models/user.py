@@ -5,7 +5,7 @@ import uuid
 
 
 class UserModel(BaseModel):
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, alias="_id")
+    id: Optional[str] = Field(default_factory=uuid.uuid4, alias="_id")
     first_name:  Optional[str] = Field(None)
     last_name: Optional[str] = Field(None)
     email:Optional[str]=Field(None)

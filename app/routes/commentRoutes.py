@@ -11,7 +11,7 @@ router = APIRouter(tags=["comment"], responses={404: {"description": "Not found"
 # Create Task
 
 
-@router.post("/comment/create", response_model=CommentsModel)
+@router.post("/comment/add")
 async def create_comment(
     data: CommentsModel,
     user: dict = Depends(verify_jwt),
@@ -19,13 +19,13 @@ async def create_comment(
     try:
         data.user_id = user  # Assuming 'id' is a part of the JWT payload
         print(data)
-        registered_task = await createComment(data)
-        return registered_task
+        result = await createComment(data)
+        return result
     except ValueError as e:
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 
-@router.get("/comments/list")
+@router.get("/comment/list")
 async def list_user_comments(
     user_id: dict = Depends(verify_jwt),
 ):

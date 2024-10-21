@@ -2,23 +2,27 @@ from pydantic import BaseModel, Field
 from bson import ObjectId, Binary, UuidRepresentation
 from typing import Optional
 from datetime import datetime
+from typing import List
+
+
 import uuid
 
 
 class TaskModel(BaseModel):
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, alias="_id")
+    id: Optional[str] = Field(default_factory=uuid.uuid4, alias="_id")
     title: Optional[str] = Field(None)
-    user_id:Optional[str] = Field(None)
     description: Optional[str] = Field(None)
     due_date: Optional[datetime] = Field(None)
     priority: Optional[str] = Field(None)
-    volunteer_id: Optional[str] = Field(None)
-    created_by: Optional[str] = Field(None)
+    volunteer_id: Optional[str] = Field(None)  # Storing volunteer_id as UUID
+    assignees: Optional[List[str]] = Field(default_factory=list) 
+    created_by: Optional[str] = Field(None)  # Storing created_by as UUID
     created_on: Optional[int] = Field(default_factory=lambda: int(datetime.now().timestamp()))
     confirmed_on: Optional[int] = Field(None)
     completed_on: Optional[int] = Field(None)
     remarks: Optional[str] = Field(None)
     is_completed: bool = Field(default=False)
+    
 
     class Config:
         allow_population_by_field_name = True

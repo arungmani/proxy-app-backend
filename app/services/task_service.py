@@ -10,9 +10,10 @@ collection = db.get_collection("tasks_collection")
 
 async def create_task(task_data: TaskModel, sid: str):
     task_dict = task_data.dict(by_alias=True)
+    task_dict["_id"] = str(task_dict["_id"])
+
     result = await collection.insert_one(task_dict)
     return await collection.find_one({"_id": result.inserted_id})
-
 
 async def list_tasks(user: str, type: str):
     print(user, type)
@@ -22,11 +23,22 @@ async def list_tasks(user: str, type: str):
 
     # Modify the query based on the "type"
     if type == "all_tasks":
-        query = {"$and": [{"created_by": {"$ne": user}}, {"volunteer_id": {"$ne": user}}]}
+        query = {
+            "$and": [
+                {"created_by": {"$ne": user}},
+                {"assignees": {"$ne": user}},  # Exclude tasks where the user is already assigned
+                {
+                    "$or": [
+                        {"assignees": {"$size": 0}},  # Tasks with no assignees
+                        {"assignees": {"$lt": 3}},    # Tasks with fewer than 3 assignees
+                    ]
+                },
+            ]
+        }
     elif type == "user_tasks":
         query = {"created_by": user}
     elif type == "assigned_tasks":
-        query = {"volunteer_id": user}
+        query = {"assignees": user}  # Fetch tasks where the user is one of the assignees
     else:
         # Optionally, handle unknown types
         raise ValueError(f"Unknown task type: {type}")
@@ -37,31 +49,61 @@ async def list_tasks(user: str, type: str):
     return tasks
 
 
-async def get_task_by_id(task_id: UUID):
-    return await collection.find_one({"_id": task_id})
+async def get_task_by_id(task_id: str):
+
+    pipeline = [
+        {"$match": {"_id": task_id}},
+        {
+            "$lookup": {
+                "from": "users_collection",  # Name of the users collection
+                "localField": "created_by",  # The field in tasks (user_id)
+                "foreignField": "_id",  # The field in users (user _id)
+                "as": "createdBy",  # Output array name
+            }
+        },
+        {
+            "$lookup": {
+                "from": "users_collection",  # Name of the users collection
+                "localField": "volunteer_id",
+                "foreignField": "_id",
+                "as": "assignedBy",
+            }
+        },
+        # {
+        #     "$unwind": "$user_details",  # Unwind user_details array (optional)
+        # },
+    ]
+
+    task_with_user_details = await collection.aggregate(pipeline).to_list(length=1)
+
+    if task_with_user_details:
+        return task_with_user_details[0]  # Return the task with user details
+    return None  # Return None if no task is found
 
 
-async def update_task_by_id(task_id: UUID, update_data: dict):
-    print("UPDATED DATA", task_id)
-    result = await collection.update_one({"_id": task_id}, {"$set": update_data})
+async def update_task_by_id(task_id: str, update_data: dict):
+    print("UPDATED DATA", update_data)
+    result = await collection.update_one({"_id": task_id}, update_data)
     if result.modified_count == 1:
         return await get_task_by_id(task_id)
     return await get_task_by_id(task_id)
 
 
-async def delete_task_by_id(task_id: UUID):
+async def delete_task_by_id(task_id: str):
     result = await collection.delete_one({"_id": task_id})
     return result.deleted_count == 1
 
 
 async def sendBroadcastMessage(task, user_id, sid):
-    user = await get_user_by_id(UUID(user_id))
+    user = await get_user_by_id(user_id)
+
+    print("THE USER IS", user)
 
     class Data:
         def __init__(self) -> None:
             self.task_name = task["title"]
             self.user = user["first_name"]
-            self.created_at=user["created_on"]
+            self.created_at = user["created_on"]
             self.sid = sid
 
     # Create an instance of the Data class

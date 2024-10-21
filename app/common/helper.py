@@ -12,6 +12,7 @@ async def verify_jwt(request: Request):
     token = token[len("Bearer "):]
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+    
         return payload.get("data")
     except PyJWTError:
         raise HTTPException(status_code=403, detail="Invalid or expired token")

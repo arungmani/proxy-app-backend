@@ -6,13 +6,12 @@ import uuid
 
 
 class CommentsModel(BaseModel):
-    id: Optional[uuid.UUID] = Field(default_factory=uuid.uuid4, alias="_id")
+    id: Optional[str] = Field(default_factory=uuid.uuid4, alias="_id")
     task_id:Optional[str] = Field(None)
     user_id:Optional[str] = Field(None)
     comment:Optional[str]=Field(None)
     parent_id:Optional[str]=Field(None)
-    hasReplies: Optional[bool] = Field(default=False)        
-    # using the isReplies field to indicate that a message has replies,
+    hasReplies: Optional[bool] = Field(default=False)        # using the isReplies field to indicate that a message has replies,
     created_at: Optional[int] = Field(default_factory=lambda: int(datetime.now().timestamp()))
   
 

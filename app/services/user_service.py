@@ -4,8 +4,7 @@ from uuid import UUID
 from datetime import datetime
 from datetime import timedelta
 from fastapi import  HTTPException
-
-
+from typing import List,Optional
 import jwt
 import bcrypt
 
@@ -20,6 +19,8 @@ async def create_user(user_data: UserModel):
     hashed_password = bcrypt.hashpw(user_data.password.encode('utf-8'), salt)
     user_data.password=hashed_password.decode('utf-8')
     user_dict = user_data.dict(by_alias=True)
+    user_dict["_id"] = str(user_dict["_id"])
+
     result = await collection.insert_one(user_dict)
     created_user=await collection.find_one({"_id": result.inserted_id})
     return created_user
@@ -44,10 +45,19 @@ async def login_user(credentials):
     raise HTTPException(status_code=404, detail=f"user not found")
 
 
-async def list_users():
-    return await collection.find().to_list(length=100)
+async def list_users(user_ids: List[str] = None):
+    if user_ids:
+        print("THE USER IDS IS",user_ids)
+        # Fetch users whose IDs match the assignee list (string IDs)
+        users = await collection.find({"_id": {"$in": user_ids}}).to_list(length=100)
+    else:
+        # Fetch all users if no user IDs are provided
+        users = await collection.find().to_list(length=100)
+    
+    return users
 
-async def get_user_by_id(user_id: UUID):
+
+async def get_user_by_id(user_id: str):
     return await collection.find_one({"_id": user_id})
 
 async def update_user_by_id(user_id: UUID, update_data: dict):
@@ -56,6 +66,6 @@ async def update_user_by_id(user_id: UUID, update_data: dict):
         return await get_user_by_id(user_id)
     return await get_user_by_id(user_id)
 
-async def delete_user_by_id(user_id: UUID):
+async def delete_user_by_id(user_id: str):
     result = await collection.delete_one({"_id": user_id})
     return result.deleted_count == 1

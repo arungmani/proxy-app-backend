@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status,Depends
+from fastapi import APIRouter, HTTPException, status, Depends
 from typing import List
 from app.models.user import UserModel
 from app.services.user_service import (
@@ -7,82 +7,106 @@ from app.services.user_service import (
     get_user_by_id,
     update_user_by_id,
     delete_user_by_id,
-    login_user
+    login_user,
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
+from pydantic import BaseModel, Field
 
 
-router = APIRouter(
-    tags=["User"],
-    responses={404: {"description": "Not found"}}
-)
+
+router = APIRouter(tags=["User"], responses={404: {"description": "Not found"}})
 
 # Register User
 
-@router.post('/user/register', response_model=UserModel)
+class UserListRequest(BaseModel):
+    user_ids: List[str]
+
+
+@router.post("/auth/register", response_model=UserModel)
 async def user_registration(data: UserModel):
-    print("THE DATA IA",data)
     registered_user = await create_user(data)
+    print("THE REGISTER USER IS", registered_user)
     return registered_user
 
-@router.post("/user/signin",)
-async def user_signIn(data:UserModel):
-    result=await login_user(data)
+
+@router.post(
+    "/auth/signin",
+)
+async def user_signIn(data: UserModel):
+    result = await login_user(data)
     return result
+
 
 # List all users
 
-@router.get("/user/list", response_model=List[UserModel])
-async def list_all_users():
-    users = await list_users()
+
+@router.post("/user/list/all",)
+async def list_all_users(data:UserListRequest):
+    users = await list_users(data.user_ids)
     return users
+
 
 # Get a single User
 
-@router.get("/user/get", response_description="Get a single user",)
-async def get_user(user: dict = Depends(verify_jwt),
+
+@router.get(
+    "/user/get",
+    response_description="Get a single user",
+)
+async def get_user(
+    user: dict = Depends(verify_jwt),
 ):
     try:
-        user_id = UUID(user)
+        user_id = user
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
-    
+
     user = await get_user_by_id(user_id)
     if user:
         return user
-    
+
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
+
 
 # Update the user
 
-@router.put("/user/update/{id}", response_description="Update a user", response_model=UserModel)
+
+@router.put(
+    "/user/update/{id}", response_description="Update a user", response_model=UserModel
+)
 async def update_single_user(id: str, user_data: UserModel):
     try:
-        user_id = UUID(id)
+        user_id = id
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
 
-    filter_data = {k: v for k, v in user_data.dict(by_alias=True).items() if v is not None and k != "_id"}
-    
+    filter_data = {
+        k: v
+        for k, v in user_data.dict(by_alias=True).items()
+        if v is not None and k != "_id"
+    }
+
     if filter_data:
         updated_user = await update_user_by_id(user_id, filter_data)
         if updated_user:
             return updated_user
-    
+
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
 
+
 # Delete a User
+
 
 @router.delete("/user/delete/{id}")
 async def delete_single_user(id: str):
     try:
-        user_id = UUID(id)
+        user_id = id
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
-    
+
     is_deleted = await delete_user_by_id(user_id)
     if is_deleted:
         return {"message": f"User with ID {id} has been deleted"}
-    
+
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
