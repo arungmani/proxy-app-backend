@@ -43,6 +43,7 @@ async def user_signIn(data: UserModel):
 
 @router.post("/user/list/all",)
 async def list_all_users(data:UserListRequest):
+    print("THE DATA IS ",data)
     users = await list_users(data.user_ids)
     return users
 

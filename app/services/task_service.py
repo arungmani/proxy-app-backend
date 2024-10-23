@@ -15,6 +15,7 @@ async def create_task(task_data: TaskModel, sid: str):
     result = await collection.insert_one(task_dict)
     return await collection.find_one({"_id": result.inserted_id})
 
+
 async def list_tasks(user: str, type: str):
     print(user, type)
 
@@ -26,25 +27,35 @@ async def list_tasks(user: str, type: str):
         query = {
             "$and": [
                 {"created_by": {"$ne": user}},
-                {"assignees": {"$ne": user}},  # Exclude tasks where the user is already assigned
                 {
-                    "$or": [
-                        {"assignees": {"$size": 0}},  # Tasks with no assignees
-                        {"assignees": {"$lt": 3}},    # Tasks with fewer than 3 assignees
-                    ]
+                    "assignees": {"$ne": user}
+                },  # Exclude tasks where the user is already assigned
+            ],
+            "$or": [
+                {"assignees": {"$size": 0}},  # Tasks with no assignees
+                {
+                    "$expr": {
+                        "$lt": [
+                            {"$size": "$assignees"},
+                            3,
+                        ]  # Tasks with fewer than 3 assignees
+                    }
                 },
-            ]
+            ],
         }
     elif type == "user_tasks":
         query = {"created_by": user}
     elif type == "assigned_tasks":
-        query = {"assignees": user}  # Fetch tasks where the user is one of the assignees
+        query = {
+            "assignees": user
+        }  # Fetch tasks where the user is one of the assignees
     else:
         # Optionally, handle unknown types
         raise ValueError(f"Unknown task type: {type}")
 
     # Execute the query
     tasks = await collection.find(query).sort("created_on", -1).to_list(length=100)
+    print("THE TASKS IS", tasks)
 
     return tasks
 

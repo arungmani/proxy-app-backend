@@ -3,6 +3,8 @@ from app.db.database import db
 from uuid import UUID
 from fastapi import HTTPException
 from pymongo import DESCENDING
+from app.services.task_service import get_task_by_id
+from typing import Optional
 
 
 collection = db.get_collection("comments_collection")
@@ -23,10 +25,21 @@ async def createComment(comment: CommentsModel):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-async def getComments(user_id: str):
+async def getComments(task_id: str, parent_id: Optional[str] = None):
     try:
+        task = await get_task_by_id(task_id)
+
+        ids = task["assignees"]
+        ids.append(task["created_by"])
+        print("THE TASK IS", ids)
         pipeline = [
-            {"$match": {"user_id": user_id}},  # Filter by user_id
+            {
+                "$match": {
+                    "user_id": {"$in": ids},
+                    "task_id": task_id,
+                    "parent_id": parent_id,
+                }
+            },  # Filter by list of user_ids and task_id
             {
                 "$lookup": {
                     "from": "users_collection",  # Name of the users collection
