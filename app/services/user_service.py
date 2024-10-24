@@ -38,7 +38,7 @@ async def login_user(credentials):
                 "data": str(user['_id']) 
             }
             token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-            return {"token": token} 
+            return {"token": token,"user":user} 
         # Raise an exception for invalid password
         raise ValueError("Invalid credentials")
     # Raise an exception for user not found
