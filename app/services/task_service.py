@@ -30,8 +30,10 @@ async def list_tasks(user: str, type: str):
                 {
                     "assignees": {"$ne": user}
                 },  # Exclude tasks where the user is already assigned
+                {"volunteer_id": None},
             ],
             "$or": [
+                
                 {"assignees": {"$size": 0}},  # Tasks with no assignees
                 {
                     "$expr": {
