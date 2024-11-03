@@ -28,35 +28,33 @@ async def createComment(comment: CommentsModel):
 async def getComments(task_id: str, parent_id: Optional[str] = None):
     try:
         task = await get_task_by_id(task_id)
+        if not task:
+            raise HTTPException(status_code=404, detail="Task not found")
 
-        ids = task["assignees"]
-        ids.append(task["created_by"])
-        print("THE TASK IS", ids)
-        pipeline = [
-            {
-                "$match": {
-                    "user_id": {"$in": ids},
-                    "task_id": task_id,
-                    "parent_id": parent_id,
-                }
-            },  # Filter by list of user_ids and task_id
-            {
-                "$lookup": {
-                    "from": "users_collection",  # Name of the users collection
-                    "localField": "user_id",  # The field in comments (user_id)
-                    "foreignField": "_id",  # The field in users (user _id)
-                    "as": "sendBy",  # Output array name
-                }
-            },
-            {
-                "$sort": {"created_at": DESCENDING}
-            },  # Sort by created_at in descending order
-        ]
+        # Collect relevant user IDs and remove duplicates
+        user_ids = list(set([task["volunteer_id"], task["created_by"]]))
 
+        # Build the match filter
+        match_filter = {
+            "sender.user_id": {"$in": user_ids},  # Changed to match sender.user_id
+            "task_id": task_id,
+        }
+        # Add parent_id conditionally
+        if parent_id is not None:
+            match_filter["parent_id"] = parent_id
+
+        # Define the aggregation pipeline
+        pipeline = [{"$match": match_filter}, {"$sort": {"created_at": DESCENDING}}]
+
+        # Execute the query and return results
         return await collection.aggregate(pipeline).to_list(length=100)
 
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+    except HTTPException as e:
+        raise e  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="An error occurred while retrieving comments."
+        )
 
 
 async def getSingleComment(id: str):
@@ -92,3 +90,23 @@ async def updateComment(comment_id: str, update_data: dict):
         collection.update_one({"_id": comment_id}, {"$set": update_data})
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+
+async def delete_comments(task_id: str, user_ids: list[str]):
+    try:
+        print("THE TASK ID AND USER IDS IS",task_id,user_ids)
+        # Build the filter for deletion
+        delete_filter = {
+            "task_id": task_id,
+            "sender.user_id": {"$in": user_ids}  # Match any of the specified user IDs
+        }
+
+        # Execute the delete operation
+        result = await collection.delete_many(delete_filter)
+
+        # Return the number of deleted documents for confirmation
+        return {"deleted_count": result.deleted_count}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="An error occurred while deleting comments.")

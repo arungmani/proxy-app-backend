@@ -9,6 +9,7 @@ class UserModel(BaseModel):
     first_name:  Optional[str] = Field(None)
     last_name: Optional[str] = Field(None)
     email:Optional[str]=Field(None)
+    role:Optional[str]=Field(None)
     phone_number: Optional[int] = Field(None)
     user_type: Optional[str] = Field(None)
     password:Optional[str]=Field(None)

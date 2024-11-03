@@ -19,7 +19,6 @@ async def create_comment(
     user: dict = Depends(verify_jwt),
 ):
     try:
-        data.user_id = user  # Assuming 'id' is a part of the JWT payload
         print(data)
         result = await createComment(data)
         return result
@@ -29,12 +28,17 @@ async def create_comment(
 
 @router.get("/comment/list/{task_id}")
 async def list_user_comments(
-    task_id: str, user_id: dict = Depends(verify_jwt),  parent_id: Optional[str] = Query(None)
+    task_id: str,
+    user_id: dict = Depends(verify_jwt),
+    parent_id: Optional[str] = Query(None),
 ):
     try:
         print("THE PARENT ID IS", parent_id)
-       
-        comments = await getComments( task_id,parent_id,)
+
+        comments = await getComments(
+            task_id,
+            parent_id,
+        )
         return comments
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

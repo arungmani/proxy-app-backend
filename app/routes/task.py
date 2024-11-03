@@ -12,6 +12,7 @@ from app.services.task_service import (
 from uuid import UUID
 from app.common.helper import verify_jwt
 from app.services.queueService import consume_queue
+from app.services.commentService import delete_comments
 
 router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 
@@ -64,7 +65,6 @@ async def get_single_task(id: str):
 @router.put(
     "/task/update/{id}", response_description="Update a task", response_model=TaskModel
 )
-
 async def update_single_task(
     id: str,
     task_data: TaskModel,
@@ -74,27 +74,31 @@ async def update_single_task(
     try:
         task_id, user_id = id, user
         task = await get_task_by_id(task_id)
-        
+
         if not task:
             raise HTTPException(status_code=404, detail=f"Task with ID {id} not found")
 
         # Mapping task update actions
         action_map = {
-            "assign": lambda: {
-                "$addToSet": {"assignees": user_id}
-            } if user_id not in task["assignees"] and len(task["assignees"]) < 3
-            else HTTPException(status_code=400, detail="User already assigned or max assignees reached (3)"),
-            
+            "assign": lambda: (
+                {"$addToSet": {"assignees": user_id}}
+                if user_id not in task["assignees"] and len(task["assignees"]) < 3
+                else HTTPException(
+                    status_code=400,
+                    detail="User already assigned or max assignees reached (3)",
+                )
+            ),
             "unassign": lambda: {"$pull": {"assignees": user_id}},
             "remove_volunteer": lambda: {"$set": {"volunteer_id": None}},
             "update_data": lambda: {
                 "$set": {
-                    k: v for k, v in task_data.dict(by_alias=True).items()
+                    k: v
+                    for k, v in task_data.dict(by_alias=True).items()
                     if v is not None and k not in ["_id", "assignees"]
                 }
-            }
+            },
         }
-        
+
         # Retrieve update action
         filter_data = action_map.get(type, action_map["update_data"])()
         if isinstance(filter_data, HTTPException):
@@ -103,6 +107,11 @@ async def update_single_task(
         print("THE DATA FOR UPDATION IS", filter_data)
 
         updated_task = await update_task_by_id(task_id, filter_data)
+
+        if type == "remove_volunteer":
+            await delete_comments(
+                task["_id"], list(set([task["created_by"], task["volunteer_id"]]))
+            )
         if updated_task:
             return updated_task
         else:
@@ -110,6 +119,7 @@ async def update_single_task(
 
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
+
 
 # Delete a Task
 
