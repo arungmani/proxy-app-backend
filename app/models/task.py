@@ -15,21 +15,21 @@ class TaskModel(BaseModel):
     due_date: Optional[datetime] = Field(None)
     priority: Optional[str] = Field(None)
     volunteer_id: Optional[str] = Field(None)  # Storing volunteer_id as UUID
-    assignees: Optional[List[str]] = Field(default_factory=list) 
+    assignees: Optional[List[str]] = Field(default_factory=list)
     created_by: Optional[str] = Field(None)  # Storing created_by as UUID
-    created_on: Optional[int] = Field(default_factory=lambda: int(datetime.now().timestamp()))
+    created_on: Optional[int] = Field(
+        default_factory=lambda: int(datetime.now().timestamp())
+    )
     confirmed_on: Optional[int] = Field(None)
     completed_on: Optional[int] = Field(None)
     remarks: Optional[str] = Field(None)
     is_completed: bool = Field(default=False)
-    
+    status: Optional[str] = Field(None)
 
     class Config:
         allow_population_by_field_name = True
         arbitrary_types_allowed = True
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
         schema_extra = {
             "example": {
                 "title": "Community Cleanup",
@@ -42,7 +42,6 @@ class TaskModel(BaseModel):
                 "confirmed_on": 1726200000,  # Example timestamp
                 "completed_on": 1726785600,  # Example timestamp
                 "remarks": "Task completed successfully.",
-                "is_completed": False
+                "is_completed": False,
             }
         }
-

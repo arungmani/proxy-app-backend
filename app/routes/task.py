@@ -24,6 +24,7 @@ async def register_task(
     data: TaskModel, user: dict = Depends(verify_jwt), sid: str = Query(...)
 ):
     data.created_by = user  # Assuming 'id' is a part of the JWT payload
+    data.status = "CREATED"
     registered_task = await create_task(data, sid)
     await sendBroadcastMessage(registered_task, user, sid)
     return registered_task
@@ -81,15 +82,22 @@ async def update_single_task(
         # Mapping task update actions
         action_map = {
             "assign": lambda: (
-                {"$addToSet": {"assignees": user_id}}
+                {
+                    "$addToSet": {"assignees": user_id},
+                    "$set": {"status": "PENDING_APPROVAL"},
+                }
                 if user_id not in task["assignees"] and len(task["assignees"]) < 3
                 else HTTPException(
                     status_code=400,
                     detail="User already assigned or max assignees reached (3)",
                 )
             ),
-            "unassign": lambda: {"$pull": {"assignees": user_id}},
-            "remove_volunteer": lambda: {"$set": {"volunteer_id": None}},
+            "unassign": lambda: {
+                "$pull": {"assignees": user_id},
+            },
+            "remove_volunteer": lambda: {
+                "$set": {"volunteer_id": None, "status": "PENDING_APPROVAL"}
+            },
             "update_data": lambda: {
                 "$set": {
                     k: v
