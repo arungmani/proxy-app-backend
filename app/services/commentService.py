@@ -5,6 +5,7 @@ from fastapi import HTTPException
 from pymongo import DESCENDING
 from app.services.task_service import get_task_by_id
 from typing import Optional
+from app.services.socket import send_message_to_room
 
 
 collection = db.get_collection("comments_collection")
@@ -19,7 +20,9 @@ async def createComment(comment: CommentsModel):
         if comment_dict["parent_id"]:
             comment_id = comment_dict["parent_id"]
             await updateComment(comment_id, {"hasReplies": True})
-
+        await showRealTimeCommentNotification(
+            comment.sender["user_id"], comment.task_id
+        )
         return await getSingleComment(result.inserted_id)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -92,14 +95,13 @@ async def updateComment(comment_id: str, update_data: dict):
         raise HTTPException(status_code=400, detail=str(e))
 
 
-
 async def delete_comments(task_id: str, user_ids: list[str]):
     try:
-        print("THE TASK ID AND USER IDS IS",task_id,user_ids)
+        print("THE TASK ID AND USER IDS IS", task_id, user_ids)
         # Build the filter for deletion
         delete_filter = {
             "task_id": task_id,
-            "sender.user_id": {"$in": user_ids}  # Match any of the specified user IDs
+            "sender.user_id": {"$in": user_ids},  # Match any of the specified user IDs
         }
 
         # Execute the delete operation
@@ -109,4 +111,21 @@ async def delete_comments(task_id: str, user_ids: list[str]):
         return {"deleted_count": result.deleted_count}
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail="An error occurred while deleting comments.")
+        raise HTTPException(
+            status_code=500, detail="An error occurred while deleting comments."
+        )
+
+
+async def showRealTimeCommentNotification(sender_id: str, task_id: str):
+    task = await get_task_by_id(task_id)
+    if task["volunteer_id"] != sender_id:
+        # Send message to the volunteer's room
+        await send_message_to_room(task["volunteer_id"], "create the comment")
+        print("WORKING FIRST CONDITION")
+    else:
+        # Send message to the creator's room
+        await send_message_to_room(
+            task["created_by"],
+            "create the comment",
+        )
+        print("WORKING THE SECOND CONDITION")

@@ -19,7 +19,7 @@ async def create_comment(
     user: dict = Depends(verify_jwt),
 ):
     try:
-        print(data)
+        print("The comment data is",data.sender["user_id"])
         result = await createComment(data)
         return result
     except ValueError as e:

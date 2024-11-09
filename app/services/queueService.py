@@ -7,7 +7,7 @@ from app.services.socket import broadcast_message
 
 def connectRabbitMq():
     try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.54"))
+        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.43.43"))
         channel = connection.channel()
         return channel, connection
     except pika.exceptions.AMQPConnectionError as e:
