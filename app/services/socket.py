@@ -70,3 +70,4 @@ async def broadcast_message(data):
         broadcast=True,
         skip_sid=data["sid"],  # Ensure 'sid' is part of your message
     )
+    return 

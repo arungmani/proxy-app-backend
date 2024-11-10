@@ -6,7 +6,7 @@ from app.routes import commentRoutes
 import socketio
 from app.services.queueService import consume_queue
 from app.services.socket import sio
-from app.services.redisService import redis_client
+from app.services.redisService import client
 import threading
 
 

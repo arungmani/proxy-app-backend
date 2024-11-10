@@ -7,7 +7,7 @@ from app.services.task_service import (
     get_task_by_id,
     update_task_by_id,
     delete_task_by_id,
-    sendBroadcastMessage,
+    notificationHandler,
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
@@ -26,7 +26,7 @@ async def register_task(
     data.created_by = user  # Assuming 'id' is a part of the JWT payload
     data.status = "CREATED"
     registered_task = await create_task(data, sid)
-    await sendBroadcastMessage(registered_task, user, sid)
+    await notificationHandler(registered_task, user, sid)
     return registered_task
 
 

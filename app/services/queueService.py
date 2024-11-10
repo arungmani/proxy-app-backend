@@ -4,6 +4,8 @@ from app.services.socket import sio
 import asyncio
 import time
 from app.services.socket import broadcast_message
+from app.services.redisService import storeNotifcationInRedis
+
 
 def connectRabbitMq():
     try:
@@ -13,6 +15,7 @@ def connectRabbitMq():
     except pika.exceptions.AMQPConnectionError as e:
         print(f"Connection to RabbitMQ failed: {e}. Retrying...")
         return None, None  # Return None if connection fails
+
 
 def add_data_to_Broadcastqueue(data_instance):
     channel, connection = connectRabbitMq()
@@ -32,9 +35,12 @@ def add_data_to_Broadcastqueue(data_instance):
 
 
 def callback(ch, method, properties, body):
-    data = json.loads(body.decode('utf-8'))
+    data = json.loads(body.decode("utf-8"))
     print(f" [x] Received {data}")
-    asyncio.run(broadcast_message(data))
+    print("THE TASK INFOR IS", data["task_info"])
+    asyncio.run(broadcast_message(data["task_info"]))
+    asyncio.run(storeNotifcationInRedis(data["user_ids"], data["task_info"]))
+
 
 def consume_queue():
     while True:  # Keep trying to consume even after failure

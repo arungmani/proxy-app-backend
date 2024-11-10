@@ -9,9 +9,11 @@ services:
     depends_on:
       - mongo
       - rabbitmq
+      - redis  # Add Redis as a dependency
     environment:
       - MONGO_URI=mongodb://mongo:27017/test_db
       - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/
+      - REDIS_URI=redis://redis:6379  # Environment variable for Redis connection
     volumes:
       - .:/app
 
@@ -30,6 +32,13 @@ services:
     ports:
       - "5672:5672"
       - "15672:15672"
+    restart: always
+
+  redis:
+    image: redis/redis-stack:latest  # Using the Redis stack image
+    container_name: redis
+    ports:
+      - "6379:6379"
     restart: always
 
 volumes:

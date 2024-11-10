@@ -3,6 +3,7 @@ from app.db.database import db
 from uuid import UUID
 from app.services.user_service import get_user_by_id
 from app.services.queueService import add_data_to_Broadcastqueue
+from app.services.user_service import list_users
 
 
 collection = db.get_collection("tasks_collection")
@@ -33,7 +34,6 @@ async def list_tasks(user: str, type: str):
                 {"volunteer_id": None},
             ],
             "$or": [
-                
                 {"assignees": {"$size": 0}},  # Tasks with no assignees
                 {
                     "$expr": {
@@ -107,24 +107,31 @@ async def delete_task_by_id(task_id: str):
     return result.deleted_count == 1
 
 
-async def sendBroadcastMessage(task, user_id, sid):
+async def notificationHandler(task, user_id, sid):
     user = await get_user_by_id(user_id)
+    all_users = await list_users()
+    print("THE ALL USERS IS", all_users)
+    user_ids = list(map(lambda user: user["_id"], all_users))
 
-    print("THE USER IS", user)
+    print("THE USER ID IS", user_ids)
 
+  
     class Data:
-        def __init__(self) -> None:
-            self.task_name = task["title"]
-            self.user = user["first_name"]
-            self.created_at = user["created_on"]
-            self.sid = sid
-
+       def __init__(self, task, user, sid, user_ids) -> None:
+        self.task_info = {  
+            "task_name": task["title"],
+            "created_at": user["created_on"],
+            "created_by": user["first_name"],
+            "sid": sid
+        }
+        self.user_ids = user_ids
+        
     # Create an instance of the Data class
-    data_instance = Data()
+    data_instance = Data(task, user, sid, user_ids)
     # Print the data attributes
     print("The data is", data_instance.__dict__)
 
-    # Add data to the queue
+    # Add data to the queue and show message and send message to online customers
     add_data_to_Broadcastqueue(data_instance)
 
     return
