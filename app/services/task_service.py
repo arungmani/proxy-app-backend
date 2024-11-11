@@ -2,7 +2,7 @@ from app.models.task import TaskModel
 from app.db.database import db
 from uuid import UUID
 from app.services.user_service import get_user_by_id
-from app.services.queueService import add_data_to_Broadcastqueue
+from app.services.queueService import add_data_to_notification_queue
 from app.services.user_service import list_users
 
 
@@ -57,7 +57,7 @@ async def list_tasks(user: str, type: str):
 
     # Execute the query
     tasks = await collection.find(query).sort("created_on", -1).to_list(length=100)
-    print("THE TASKS IS", tasks)
+    # print("THE TASKS IS", tasks)
 
     return tasks
 
@@ -115,23 +115,22 @@ async def notificationHandler(task, user_id, sid):
 
     print("THE USER ID IS", user_ids)
 
-  
     class Data:
-       def __init__(self, task, user, sid, user_ids) -> None:
-        self.task_info = {  
-            "task_name": task["title"],
-            "created_at": user["created_on"],
-            "created_by": user["first_name"],
-            "sid": sid
-        }
-        self.user_ids = user_ids
-        
+        def __init__(self, task, user, sid, user_ids) -> None:
+            self.task_info = {
+                "task_name": task["title"],
+                "created_at": user["created_on"],
+                "created_by": user["first_name"],
+            }
+            self.sid= sid
+            self.user_ids = user_ids
+
     # Create an instance of the Data class
     data_instance = Data(task, user, sid, user_ids)
     # Print the data attributes
     print("The data is", data_instance.__dict__)
 
     # Add data to the queue and show message and send message to online customers
-    add_data_to_Broadcastqueue(data_instance)
+    add_data_to_notification_queue(data_instance)
 
     return

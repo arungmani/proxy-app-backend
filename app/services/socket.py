@@ -62,12 +62,13 @@ async def list_connected_clients():
         print(f"Client {sid} is connected")
 
 
-async def broadcast_message(data):
+async def broadcast_message(data,sid):
     """Async function to emit the notification."""
     await sio.emit(
         "task_notification",
         data,
         broadcast=True,
-        skip_sid=data["sid"],  # Ensure 'sid' is part of your message
+        skip_sid=sid,  # Ensure 'sid' is part of your message
     )
+   
     return 

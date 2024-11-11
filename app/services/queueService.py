@@ -9,7 +9,7 @@ from app.services.redisService import storeNotifcationInRedis
 
 def connectRabbitMq():
     try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.43.43"))
+        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.46"))
         channel = connection.channel()
         return channel, connection
     except pika.exceptions.AMQPConnectionError as e:
@@ -17,16 +17,18 @@ def connectRabbitMq():
         return None, None  # Return None if connection fails
 
 
-def add_data_to_Broadcastqueue(data_instance):
+def add_data_to_notification_queue(data_instance):
     channel, connection = connectRabbitMq()
     if not channel or not connection:
         print("Failed to connect to RabbitMQ. Cannot send message.")
         return
 
     try:
-        channel.queue_declare(queue="broadcast_queue")
+        channel.queue_declare(queue="notification_queue")
         message = json.dumps(data_instance.__dict__)
-        channel.basic_publish(exchange="", routing_key="broadcast_queue", body=message)
+        channel.basic_publish(
+            exchange="", routing_key="notification_queue", body=message
+        )
         print(" [x] Sent message:", message)
     except pika.exceptions.AMQPError as e:
         print(f"Failed to publish message: {e}")
@@ -38,7 +40,9 @@ def callback(ch, method, properties, body):
     data = json.loads(body.decode("utf-8"))
     print(f" [x] Received {data}")
     print("THE TASK INFOR IS", data["task_info"])
-    asyncio.run(broadcast_message(data["task_info"]))
+    """ Show notification to online customers """
+    asyncio.run(broadcast_message(data["task_info"], data["sid"]))
+    """ For showing notification for off line customers """
     asyncio.run(storeNotifcationInRedis(data["user_ids"], data["task_info"]))
 
 
@@ -50,9 +54,9 @@ def consume_queue():
             continue  # Retry after a delay if connection fails
 
         try:
-            channel.queue_declare(queue="broadcast_queue")
+            channel.queue_declare(queue="notification_queue")
             channel.basic_consume(
-                queue="broadcast_queue", auto_ack=True, on_message_callback=callback
+                queue="notification_queue", auto_ack=True, on_message_callback=callback
             )
             print(" [*] Waiting for messages. To exit press CTRL+C")
             channel.start_consuming()
