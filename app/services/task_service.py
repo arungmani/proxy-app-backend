@@ -111,8 +111,7 @@ async def notificationHandler(task, user_id, sid):
     user = await get_user_by_id(user_id)
     all_users = await list_users()
     print("THE ALL USERS IS", all_users)
-    user_ids = list(map(lambda user: user["_id"], all_users))
-
+    user_ids = [user["_id"] for user in all_users if user["_id"] != user_id]
     print("THE USER ID IS", user_ids)
 
     class Data:
@@ -134,3 +133,5 @@ async def notificationHandler(task, user_id, sid):
     add_data_to_notification_queue(data_instance)
 
     return
+
+

@@ -11,6 +11,9 @@ from app.services.user_service import (
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
+from app.services.redisService import getNotifications
+from app.services.redisService import deleteNotification
+
 from pydantic import BaseModel, Field
 
 
@@ -55,7 +58,7 @@ async def list_all_users(data:UserListRequest):
     "/user/get",
     response_description="Get a single user",
 )
-async def get_user(
+async def Ïget_user(
     user: dict = Depends(verify_jwt),
 ):
     try:
@@ -65,6 +68,11 @@ async def get_user(
 
     user = await get_user_by_id(user_id)
     if user:
+         # If user exists, retrieve their notifications
+        notifications = await getNotifications(user_id)
+        # Add notifications as a key in the user dictionary
+        user['notifications'] = notifications
+    
         return user
 
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
@@ -111,3 +119,18 @@ async def delete_single_user(id: str):
         return {"message": f"User with ID {id} has been deleted"}
 
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
+
+
+
+@router.delete("/user/notifications/delete")
+async def delete_user_notifications(user_id: dict = Depends(verify_jwt)):
+    try:
+        # Call a different function to handle the deletion
+        result = await deleteNotification(user_id)  
+        if result:
+            return {"message": f"Notifications for user with ID {user_id} have been deleted"}
+        else:
+            raise HTTPException(status_code=404, detail="No notifications found for this user")
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"An error occurred while deleting notifications: {str(e)}")
