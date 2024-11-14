@@ -11,16 +11,16 @@ from app.services.user_service import (
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
-from app.services.redisService import getNotifications
-from app.services.redisService import deleteNotification
+from app.services.redisService import getCache
+from app.services.redisService import deleteCache
 
 from pydantic import BaseModel, Field
-
 
 
 router = APIRouter(tags=["User"], responses={404: {"description": "Not found"}})
 
 # Register User
+
 
 class UserListRequest(BaseModel):
     user_ids: List[str]
@@ -44,9 +44,11 @@ async def user_signIn(data: UserModel):
 # List all users
 
 
-@router.post("/user/list/all",)
-async def list_all_users(data:UserListRequest):
-    print("THE DATA IS ",data)
+@router.post(
+    "/user/list/all",
+)
+async def list_all_users(data: UserListRequest):
+    print("THE DATA IS ", data)
     users = await list_users(data.user_ids)
     return users
 
@@ -68,11 +70,12 @@ async def Ïget_user(
 
     user = await get_user_by_id(user_id)
     if user:
-         # If user exists, retrieve their notifications
-        notifications = await getNotifications(user_id)
+        # If user exists, retrieve their tifications
+        key = f"notifications_{user_id}"  # key for get items from redis
+        notifications = await getCache(key)  # get  notifications from redis cache
         # Add notifications as a key in the user dictionary
-        user['notifications'] = notifications
-    
+        user["notifications"] = notifications
+
         return user
 
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
@@ -121,16 +124,23 @@ async def delete_single_user(id: str):
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
 
 
-
 @router.delete("/user/notifications/delete")
 async def delete_user_notifications(user_id: dict = Depends(verify_jwt)):
     try:
+        key = f"notifications_{user_id}"  # key for get items from redis
         # Call a different function to handle the deletion
-        result = await deleteNotification(user_id)  
+        result = await deleteCache(key)
         if result:
-            return {"message": f"Notifications for user with ID {user_id} have been deleted"}
+            return {
+                "message": f"Notifications for user with ID {user_id} have been deleted"
+            }
         else:
-            raise HTTPException(status_code=404, detail="No notifications found for this user")
+            raise HTTPException(
+                status_code=404, detail="No notifications found for this user"
+            )
 
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"An error occurred while deleting notifications: {str(e)}")
+        raise HTTPException(
+            status_code=400,
+            detail=f"An error occurred while deleting notifications: {str(e)}",
+        )

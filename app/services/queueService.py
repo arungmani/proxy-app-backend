@@ -4,12 +4,12 @@ from app.services.socket import sio
 import asyncio
 import time
 from app.services.socket import broadcast_message
-from app.services.redisService import storeNotifcationInRedis
+from app.services.redisService import setCache
 
 
 def connectRabbitMq():
     try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.46"))
+        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.37"))
         channel = connection.channel()
         return channel, connection
     except pika.exceptions.AMQPConnectionError as e:
@@ -43,7 +43,11 @@ def callback(ch, method, properties, body):
     """ Show notification to online customers """
     asyncio.run(broadcast_message(data["task_info"], data["sid"]))
     """ For showing notification for off line customers """
-    asyncio.run(storeNotifcationInRedis(data["user_ids"], data["task_info"]))
+    message = json.dumps(data["task_info"])
+    user_ids = data["user_ids"]
+    for user_id in user_ids:
+        key = f"notifications_{user_id}"
+        asyncio.run(setCache(key, message))
 
 
 def consume_queue():
