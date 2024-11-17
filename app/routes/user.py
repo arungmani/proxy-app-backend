@@ -8,6 +8,7 @@ from app.services.user_service import (
     update_user_by_id,
     delete_user_by_id,
     login_user,
+    update_user_ratings,
 )
 from uuid import UUID
 from app.common.helper import verify_jwt
@@ -25,6 +26,9 @@ router = APIRouter(tags=["User"], responses={404: {"description": "Not found"}})
 class UserListRequest(BaseModel):
     user_ids: List[str]
 
+class RatingReqModel(BaseModel):
+    rating:float
+    rating_type:str
 
 @router.post("/auth/register", response_model=UserModel)
 async def user_registration(data: UserModel):
@@ -144,3 +148,30 @@ async def delete_user_notifications(user_id: dict = Depends(verify_jwt)):
             status_code=400,
             detail=f"An error occurred while deleting notifications: {str(e)}",
         )
+
+@router.put("/users/ratings",)
+async def update_ratings(
+    rating_data: RatingReqModel,  # Expect the entire body as a model
+    user_id: dict = Depends(verify_jwt),
+):
+    """
+    Update ratings for a user.
+
+    :param user_id: ID of the user to update ratings for.
+    :param rating_data: Object containing the new rating and type.
+    :return: Success message or error.
+    """
+    # Extract rating and type from the model
+    rating = rating_data.rating
+    rating_type = rating_data.rating_type
+
+    # Validate rating type
+    if rating_type not in ["created", "assigned"]:
+        raise HTTPException(status_code=400, detail="Invalid rating type.")
+
+    # Call the service to update the ratings
+    success = await update_user_ratings(user_id, rating, rating_type)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found or update failed.")
+
+    return {"message": f"Rating successfully updated for user {user_id}"}

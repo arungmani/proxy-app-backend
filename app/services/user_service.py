@@ -71,3 +71,36 @@ async def update_user_by_id(user_id: UUID, update_data: dict):
 async def delete_user_by_id(user_id: str):
     result = await collection.delete_one({"_id": user_id})
     return result.deleted_count == 1
+
+
+async def update_user_ratings(
+    user_id: str,
+    rating: float,
+    rating_type: str,
+) -> bool:
+    """
+    Update the ratings for a user in the database
+    """
+    user = await get_user_by_id(user_id)
+    if not user:
+        return False
+
+    if rating_type == "created":
+        ratings_field = "created_task_ratings"
+        avg_field = "avg_created_task_rating"
+    else:
+        ratings_field = "assigned_task_ratings"
+        avg_field = "avg_assigned_task_rating"
+
+    # Update the ratings array and calculate the new average
+    ratings = user.get(ratings_field, [])
+    ratings.append(rating)
+    avg_rating = sum(ratings) / len(ratings)
+
+    update_result = await update_user_by_id(
+        user_id, {ratings_field: ratings, avg_field: avg_rating}
+    )
+    # db.users.update_one(
+    #     {"_id": user_id}, {"$set": {ratings_field: ratings, avg_field: avg_rating}}
+    # )
+    return update_result

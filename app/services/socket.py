@@ -20,7 +20,7 @@ async def disconnect(sid):
 
 
 async def handleJoinRoomEvent(sid, data):
-    print("h121263237012", data["user_id"])
+    print("The user id is", data["user_id"])
     room = data["user_id"]
     res=sio.enter_room(sid,room)
     print(f"Client {sid} joined room",res)
