@@ -150,7 +150,7 @@ async def delete_user_notifications(user_id: dict = Depends(verify_jwt)):
             detail=f"An error occurred while deleting notifications: {str(e)}",
         )
 
-@router.put("/users/ratings",)
+@router.put("/user/rating",)
 async def update_ratings(
     rating_data: RatingReqModel,  # Expect the entire body as a model
     ratedBy: dict = Depends(verify_jwt),

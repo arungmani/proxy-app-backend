@@ -98,7 +98,7 @@ async def update_user_ratings(
     ratingsData = user.get(ratings_field, [])
     
     ratingsData.append({"ratingBy": ratedBy, "rating": rating})
-    
+    print("THE RATING DATA IS",ratingsData)
     avg_rating = sum(entry["rating"] for entry in ratingsData) / len(ratingsData)
     
     update_result = await update_user_by_id(
