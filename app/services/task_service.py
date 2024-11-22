@@ -29,7 +29,7 @@ async def list_tasks(user: str, type: str):
             "$and": [
                 {"created_by": {"$ne": user}},
                 {
-                    "assignees": {"$ne": user}
+                    "assignees": {"$not": {"$elemMatch": {"_id": user}}}
                 },  # Exclude tasks where the user is already assigned
                 {"volunteer_id": None},
             ],
@@ -48,9 +48,8 @@ async def list_tasks(user: str, type: str):
     elif type == "user_tasks":
         query = {"created_by": user}
     elif type == "assigned_tasks":
-        query = {
-            "assignees": user
-        }  # Fetch tasks where the user is one of the assignees
+        query = {"assignees._id": user}
+        # Fetch tasks where the user is one of the assignees
     else:
         # Optionally, handle unknown types
         raise ValueError(f"Unknown task type: {type}")
@@ -121,7 +120,7 @@ async def notificationHandler(task, user_id, sid):
                 "created_at": user["created_on"],
                 "created_by": user["first_name"],
             }
-            self.sid= sid
+            self.sid = sid
             self.user_ids = user_ids
 
     # Create an instance of the Data class
@@ -133,5 +132,3 @@ async def notificationHandler(task, user_id, sid):
     add_data_to_notification_queue(data_instance)
 
     return
-
-

@@ -7,6 +7,10 @@ from typing import List
 
 import uuid
 
+class AssigneeModel(BaseModel):
+    first_name: str
+    last_name: str
+    _id: str
 
 class TaskModel(BaseModel):
     id: Optional[str] = Field(default_factory=uuid.uuid4, alias="_id")
@@ -16,7 +20,7 @@ class TaskModel(BaseModel):
     location: Optional[str] = Field(None)
     priority: Optional[str] = Field(None)
     volunteer_id: Optional[str] = Field(None)  # Storing volunteer_id as UUID
-    assignees: Optional[List[str]] = Field(default_factory=list)
+    assignees: Optional[List[AssigneeModel]] = []
     created_by: Optional[str] = Field(None)  # Storing created_by as UUID
     created_on: Optional[int] = Field(
         default_factory=lambda: int(datetime.now().timestamp())

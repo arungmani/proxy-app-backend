@@ -30,6 +30,7 @@ class RatingReqModel(BaseModel):
     rating:float
     rating_type:str
     ratedTo:str
+    task_name:str
 
 @router.post("/auth/register", response_model=UserModel)
 async def user_registration(data: UserModel):
@@ -166,13 +167,14 @@ async def update_ratings(
     rating = rating_data.rating
     rating_type = rating_data.rating_type
     ratedTo=rating_data.ratedTo
+    task_name=rating_data.task_name
 
     # Validate rating type
     if rating_type not in ["created", "assigned"]:
         raise HTTPException(status_code=400, detail="Invalid rating type.")
 
     # Call the service to update the ratings
-    success = await update_user_ratings(ratedTo, rating, rating_type,ratedBy)
+    success = await update_user_ratings(ratedTo, rating, rating_type,ratedBy,task_name)
     if not success:
         raise HTTPException(status_code=404, detail="User not found or update failed.")
 

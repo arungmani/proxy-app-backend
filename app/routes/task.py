@@ -13,6 +13,7 @@ from uuid import UUID
 from app.common.helper import verify_jwt
 from app.services.queueService import consume_queue
 from app.services.commentService import delete_comments
+from app.services.user_service import get_user_by_id
 
 router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 
@@ -79,21 +80,29 @@ async def update_single_task(
         if not task:
             raise HTTPException(status_code=404, detail=f"Task with ID {id} not found")
 
+        user = await get_user_by_id(user_id)
+        assignee_object = {
+            "first_name": user["first_name"],
+            "last_name": user["last_name"],
+            "_id": user["_id"],
+        }
+
         # Mapping task update actions
         action_map = {
             "assign": lambda: (
                 {
-                    "$addToSet": {"assignees": user_id},
+                    "$addToSet": {"assignees": assignee_object},
                     "$set": {"status": "PENDING_APPROVAL"},
                 }
-                if user_id not in task["assignees"] and len(task["assignees"]) < 3
+                if assignee_object not in task["assignees"]
+                and len(task["assignees"]) < 3
                 else HTTPException(
                     status_code=400,
                     detail="User already assigned or max assignees reached (3)",
                 )
             ),
             "unassign": lambda: {
-                "$pull": {"assignees": user_id},
+                {"assignees": {"_id": user_id}},
             },
             "remove_volunteer": lambda: {
                 "$set": {"volunteer_id": None, "status": "PENDING_APPROVAL"}

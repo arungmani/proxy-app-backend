@@ -74,12 +74,8 @@ async def delete_user_by_id(user_id: str):
 
 
 async def update_user_ratings(
-    ratedTo: str,
-    rating: float,
-    rating_type: str,
-    ratedBy:str
+    ratedTo: str, rating: float, rating_type: str, ratedBy: str, task_name: str
 ) -> bool:
-    
     """
     Update the ratings for a user in the database
     """
@@ -96,13 +92,13 @@ async def update_user_ratings(
 
     # Update the ratings array and calculate the new average
     ratingsData = user.get(ratings_field, [])
-    
-    ratingsData.append({"ratingBy": ratedBy, "rating": rating})
-    print("THE RATING DATA IS",ratingsData)
+
+    ratingsData.append({"ratingBy": ratedBy, "rating": rating, "task_name": task_name})
+    print("THE RATING DATA IS", ratingsData)
     avg_rating = sum(entry["rating"] for entry in ratingsData) / len(ratingsData)
-    
+
     update_result = await update_user_by_id(
         ratedTo, {ratings_field: ratingsData, avg_field: avg_rating}
     )
-  
+
     return update_result
