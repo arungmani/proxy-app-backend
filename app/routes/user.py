@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends,Query
 from typing import List
 from app.models.user import UserModel
 from app.services.user_service import (
@@ -67,10 +67,13 @@ async def list_all_users(data: UserListRequest):
     response_description="Get a single user",
 )
 async def Ïget_user(
-    user: dict = Depends(verify_jwt),
+    authUser: dict = Depends(verify_jwt),
+    id: str = Query(None)
 ):
     try:
-        user_id = user
+      user_id = id if id else authUser
+
+            
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
 

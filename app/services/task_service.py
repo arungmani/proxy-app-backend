@@ -96,9 +96,7 @@ async def get_task_by_id(task_id: str):
 async def update_task_by_id(task_id: str, update_data: dict):
     print("UPDATED DATA", update_data)
     result = await collection.update_one({"_id": task_id}, update_data)
-    if result.modified_count == 1:
-        return await get_task_by_id(task_id)
-    return await get_task_by_id(task_id)
+    await  get_task_by_id(task_id)
 
 
 async def delete_task_by_id(task_id: str):
