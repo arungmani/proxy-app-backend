@@ -91,8 +91,12 @@ async def update_user_ratings(
         avg_field = "avg_assigned_task_rating"
 
     # Update the ratings array and calculate the new average
-    ratingsData = user.get(ratings_field, [])
 
+    ratingsData = user.get(ratings_field) or []
+    if not isinstance(ratingsData, list):
+        ratingsData = []
+
+    print("the ratings append data",ratingsData)
     ratingsData.append({"ratingBy": ratedBy, "rating": rating, "task_name": task_name})
     print("THE RATING DATA IS", ratingsData)
     avg_rating = sum(entry["rating"] for entry in ratingsData) / len(ratingsData)

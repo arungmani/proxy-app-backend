@@ -74,8 +74,8 @@ async def update_single_task(
     user: dict = Depends(verify_jwt),
 ):
     try:
-        task_id, user_id = id, user
-        task = await get_task_by_id(task_id)
+        user_id =  user
+        task = await get_task_by_id(id)
 
         if not task:
             raise HTTPException(status_code=404, detail=f"Task with ID {id} not found")
@@ -102,7 +102,7 @@ async def update_single_task(
                 )
             ),
             "unassign": lambda: {
-                {"assignees": {"_id": user_id}},
+                  "$pull": {"assignees": {"_id": user_id}}
             },
             "remove_volunteer": lambda: {
                 "$set": {"volunteer_id": None, "status": "PENDING_APPROVAL"}
@@ -123,7 +123,7 @@ async def update_single_task(
 
         print("THE DATA FOR UPDATION IS", filter_data)
 
-        updated_task = await update_task_by_id(task_id, filter_data)
+        updated_task = await update_task_by_id(id, filter_data)
 
         if type == "remove_volunteer":
             await delete_comments(

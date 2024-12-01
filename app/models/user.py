@@ -18,15 +18,17 @@ class UserModel(BaseModel):
         default_factory=lambda: int(datetime.utcnow().timestamp())
     )
     # Ratings as a task creator
-    created_task_ratings: Optional[List[float]] = (
-        None  # Ratings received for tasks created
-    )
+    # created_task_ratings: Optional[List[float]] = (
+    #     None  # Ratings received for tasks created
+    # )
     avg_created_task_rating: Optional[float] = None  # Average rating as task creator
+    created_task_ratings: List[float] = Field(default_factory=list)
+    assigned_task_ratings: List[float] = Field(default_factory=list)
 
     # Ratings as a task assignee
-    assigned_task_ratings: Optional[List[float]] = (
-        None  # Ratings received for tasks assigned
-    )
+    # assigned_task_ratings: Optional[List[float]] = (
+    #     None  # Ratings received for tasks assigned
+    # )
     avg_assigned_task_rating: Optional[float] = None  # Average rating as task assignee
 
     class Config:

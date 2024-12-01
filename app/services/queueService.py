@@ -9,7 +9,7 @@ from app.services.redisService import setCache
 
 def connectRabbitMq():
     try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.41"))
+        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.37"))
         channel = connection.channel()
         return channel, connection
     except pika.exceptions.AMQPConnectionError as e:

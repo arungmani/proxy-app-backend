@@ -62,6 +62,7 @@ async def list_tasks(user: str, type: str):
 
 
 async def get_task_by_id(task_id: str):
+    print("the task id is ",task_id)
 
     pipeline = [
         {"$match": {"_id": task_id}},
@@ -94,9 +95,10 @@ async def get_task_by_id(task_id: str):
 
 
 async def update_task_by_id(task_id: str, update_data: dict):
-    print("UPDATED DATA", update_data)
+    print("UPDATED DATA", task_id)
+    
     result = await collection.update_one({"_id": task_id}, update_data)
-    await  get_task_by_id(task_id)
+    return await  get_task_by_id(task_id)
 
 
 async def delete_task_by_id(task_id: str):
