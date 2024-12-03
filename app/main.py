@@ -8,6 +8,7 @@ from app.services.queueService import consume_queue
 from app.services.socket import sio
 from app.services.redisService import client
 import threading
+from app.services.email_service import sendEmail
 
 
 app = FastAPI(
@@ -40,3 +41,4 @@ consumer_thread.daemon = (
     True  # This ensures the thread exits when the main program does
 )
 consumer_thread.start()
+

@@ -12,7 +12,7 @@ from app.services.task_service import (
 from uuid import UUID
 from app.common.helper import verify_jwt
 from app.services.queueService import consume_queue
-from app.services.commentService import delete_comments
+from app.services.comment_service import delete_comments
 from app.services.user_service import get_user_by_id
 
 router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})

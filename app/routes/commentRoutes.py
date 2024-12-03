@@ -3,8 +3,8 @@ from uuid import UUID
 from typing import List
 from app.common.helper import verify_jwt
 from app.models.comment import CommentsModel
-from app.services.commentService import createComment
-from app.services.commentService import getComments
+from app.services.comment_service import createComment
+from app.services.comment_service import getComments
 from typing import Optional
 
 

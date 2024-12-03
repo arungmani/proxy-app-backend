@@ -5,11 +5,13 @@ import asyncio
 import time
 from app.services.socket import broadcast_message
 from app.services.redisService import setCache
+import os
 
 
 def connectRabbitMq():
     try:
-        connection = pika.BlockingConnection(pika.ConnectionParameters("192.168.1.37"))
+        ip_address=os.getenv("IP_ADDRESS")
+        connection = pika.BlockingConnection(pika.ConnectionParameters(ip_address))
         channel = connection.channel()
         return channel, connection
     except pika.exceptions.AMQPConnectionError as e:
