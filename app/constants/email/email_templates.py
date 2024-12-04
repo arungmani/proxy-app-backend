@@ -2,16 +2,16 @@
 
 # Template dictionary for different use cases
 EMAIL_TEMPLATES = {
-    "welcome": {
-        "subject": "Welcome to Our Service",
-        "body": "Hi {name},\n\nWelcome to our platform. We are excited to have you onboard!\n\nBest regards,\nTeam",
-    },
-    "password_reset": {
-        "subject": "Password Reset Request",
-        "body": "Hello {name},\n\nYou requested a password reset. Please use the following link to reset your password: {link}\n\nIf you did not make this request, please ignore this email.\n\nRegards,\nSupport Team",
-    },
-    "task_notification": {
-        "subject": "New Task Assigned",
-        "body": "Hi {name},\n\nYou have been assigned a new task: {task_name}. Please check your dashboard for more details.\n\nThanks,\nManagement",
+    "complete_profile": {
+        "subject": "Complete Your Profile on Project X",
+        "body": (
+            "Hi {name},\n\n"
+            "Welcome to our platform! Please complete your profile by setting your password and selecting your role.\n\n"
+            "Click the link below to complete your profile:\n"
+            "{link}\n\n"
+            "If you did not request this, please ignore this email.\n\n"
+            "Best regards,\n"
+            "Team Project X"
+        ),
     },
 }

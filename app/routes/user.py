@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status, Depends,Query
+from fastapi import APIRouter, HTTPException, status, Depends, Query
 from typing import List
 from app.models.user import UserModel
 from app.services.user_service import (
@@ -14,6 +14,9 @@ from uuid import UUID
 from app.common.helper import verify_jwt
 from app.services.redisService import getCache
 from app.services.redisService import deleteCache
+from app.services.email_service import sendEmail
+from app.constants import *
+
 
 from pydantic import BaseModel, Field
 
@@ -26,16 +29,23 @@ router = APIRouter(tags=["User"], responses={404: {"description": "Not found"}})
 class UserListRequest(BaseModel):
     user_ids: List[str]
 
+
 class RatingReqModel(BaseModel):
-    rating:float
-    rating_type:str
-    ratedTo:str
-    task_name:str
+    rating: float
+    rating_type: str
+    ratedTo: str
+    task_name: str
+
 
 @router.post("/auth/register", response_model=UserModel)
 async def user_registration(data: UserModel):
     registered_user = await create_user(data)
     print("THE REGISTER USER IS", registered_user)
+    placeholders = {
+        "name": data.first_name + " " + data.last_name,
+        "link": FRONTEND_URL + "/#/auth/signup?mode=complete_profile",
+    }
+    sendEmail(data.email, "complete_profile", placeholders)
     return registered_user
 
 
@@ -66,14 +76,10 @@ async def list_all_users(data: UserListRequest):
     "/user/get",
     response_description="Get a single user",
 )
-async def Ïget_user(
-    authUser: dict = Depends(verify_jwt),
-    id: str = Query(None)
-):
+async def Ïget_user(authUser: dict = Depends(verify_jwt), id: str = Query(None)):
     try:
-      user_id = id if id else authUser
+        user_id = id if id else authUser
 
-            
     except ValueError:
         raise HTTPException(status_code=400, detail="Invalid UUID format")
 
@@ -154,7 +160,10 @@ async def delete_user_notifications(user_id: dict = Depends(verify_jwt)):
             detail=f"An error occurred while deleting notifications: {str(e)}",
         )
 
-@router.put("/user/rating",)
+
+@router.put(
+    "/user/rating",
+)
 async def update_ratings(
     rating_data: RatingReqModel,  # Expect the entire body as a model
     ratedBy: dict = Depends(verify_jwt),
@@ -169,15 +178,17 @@ async def update_ratings(
     # Extract rating and type from the model
     rating = rating_data.rating
     rating_type = rating_data.rating_type
-    ratedTo=rating_data.ratedTo
-    task_name=rating_data.task_name
+    ratedTo = rating_data.ratedTo
+    task_name = rating_data.task_name
 
     # Validate rating type
     if rating_type not in ["created", "assigned"]:
         raise HTTPException(status_code=400, detail="Invalid rating type.")
 
     # Call the service to update the ratings
-    success = await update_user_ratings(ratedTo, rating, rating_type,ratedBy,task_name)
+    success = await update_user_ratings(
+        ratedTo, rating, rating_type, ratedBy, task_name
+    )
     if not success:
         raise HTTPException(status_code=404, detail="User not found or update failed.")
 
