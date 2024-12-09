@@ -14,7 +14,7 @@ services:
       - MONGO_URI=mongodb://mongo:27017/test_db
       - RABBITMQ_URI=amqp://guest:guest@rabbitmq:5672/
       - REDIS_URI=redis://redis:6379  # Environment variable for Redis connection
-      - IP_ADDRESS=192.168.1.37
+      - IP_ADDRESS=192.168.1.46
       - EMAIL_PASSWORD=xlyk gpfa jans xsyc
      
     volumes:

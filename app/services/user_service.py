@@ -12,9 +12,9 @@ collection = db.get_collection("users_collection")
 
 
 async def create_user(user_data: UserModel):
-    salt = bcrypt.gensalt()
-    hashed_password = bcrypt.hashpw(user_data.password.encode("utf-8"), salt)
-    user_data.password = hashed_password.decode("utf-8")
+    # salt = bcrypt.gensalt()
+    # hashed_password = bcrypt.hashpw(user_data.password.encode("utf-8"), salt)
+    # user_data.password = hashed_password.decode("utf-8")
     user_dict = user_data.dict(by_alias=True)
     user_dict["_id"] = str(user_dict["_id"])
 
@@ -61,7 +61,14 @@ async def get_user_by_id(user_id: str):
     return await collection.find_one({"_id": user_id})
 
 
-async def update_user_by_id(user_id: UUID, update_data: dict):
+async def update_user_by_id(user_id: UUID, update_data: dict, type: str):
+    print("THE UPDATED DAATA FOR",update_data)
+    if type == "complete_profile":
+        salt = bcrypt.gensalt()
+        hashed_password = bcrypt.hashpw(
+            update_data.get("password").encode("utf-8"), salt
+        )
+        update_data["password"] = hashed_password.decode("utf-8")
     result = await collection.update_one({"_id": user_id}, {"$set": update_data})
     if result.modified_count == 1:
         return await get_user_by_id(user_id)
@@ -96,7 +103,7 @@ async def update_user_ratings(
     if not isinstance(ratingsData, list):
         ratingsData = []
 
-    print("the ratings append data",ratingsData)
+    print("the ratings append data", ratingsData)
     ratingsData.append({"ratingBy": ratedBy, "rating": rating, "task_name": task_name})
     print("THE RATING DATA IS", ratingsData)
     avg_rating = sum(entry["rating"] for entry in ratingsData) / len(ratingsData)

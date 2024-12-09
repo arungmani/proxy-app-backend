@@ -16,6 +16,9 @@ from app.services.redisService import getCache
 from app.services.redisService import deleteCache
 from app.services.email_service import sendEmail
 from app.constants import *
+from datetime import datetime
+from datetime import timedelta
+import jwt
 
 
 from pydantic import BaseModel, Field
@@ -45,7 +48,7 @@ async def user_registration(data: UserModel):
         "name": data.first_name + " " + data.last_name,
         "link": FRONTEND_URL + "/#/auth/signup?mode=complete_profile",
     }
-    sendEmail(data.email, "complete_profile", placeholders)
+    # sendEmail(data.email, "complete_profile", placeholders)
     return registered_user
 
 
@@ -100,9 +103,9 @@ async def Ïget_user(authUser: dict = Depends(verify_jwt), id: str = Query(None)
 
 
 @router.put(
-    "/user/update/{id}", response_description="Update a user", response_model=UserModel
+    "/user/update/{id}", response_description="Update a user"
 )
-async def update_single_user(id: str, user_data: UserModel):
+async def update_single_user(id: str, user_data: UserModel, type: str = Query(...)):
     try:
         user_id = id
     except ValueError:
@@ -115,9 +118,22 @@ async def update_single_user(id: str, user_data: UserModel):
     }
 
     if filter_data:
-        updated_user = await update_user_by_id(user_id, filter_data)
+        updated_user = await update_user_by_id(user_id, filter_data, type)
         if updated_user:
-            return updated_user
+            if type:
+                # need to move in to the env
+                SECRET_KEY = "secret_123"
+
+                payload = {
+                    "exp": datetime.now()
+                    + timedelta(days=15),  # Token expires in 15 days
+                    "data": str(updated_user["_id"]),
+                }
+                token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+                print("THE TOKEN IS",{"token": token, "user": updated_user})
+                return {"token": token, "user": updated_user}
+            else:
+                return updated_user
 
     raise HTTPException(status_code=404, detail=f"User with ID {id} not found")
 

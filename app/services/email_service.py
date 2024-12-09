@@ -35,8 +35,10 @@ def sendEmail(receiver_email,use_case,placeholders):
             server.login(SENDER_EMAIL, password)  # Log in
             server.sendmail(SENDER_EMAIL, receiver_email, message.as_string())  # Send the email
             print("Email sent successfully!")
+            return
     except Exception as e:
         print(f"An error occurred: {e}")
+        return
 
 # Call the function
 # sendEmail()
