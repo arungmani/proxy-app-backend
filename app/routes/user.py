@@ -46,7 +46,9 @@ async def user_registration(data: UserModel):
     print("THE REGISTER USER IS", registered_user)
     placeholders = {
         "name": data.first_name + " " + data.last_name,
-        "link": FRONTEND_URL + "/#/auth/signup?mode=complete_profile",
+        "link": FRONTEND_URL
+        + "/#/auth/signup?mode=complete_profile&"
+        + registered_user["_id"],
     }
     # sendEmail(data.email, "complete_profile", placeholders)
     return registered_user
@@ -102,10 +104,8 @@ async def Ïget_user(authUser: dict = Depends(verify_jwt), id: str = Query(None)
 # Update the user
 
 
-@router.put(
-    "/user/update/{id}", response_description="Update a user"
-)
-async def update_single_user(id: str, user_data: UserModel, type: str = Query(...)):
+@router.put("/user/update/{id}", response_description="Update a user")
+async def update_single_user(id: str, user_data: UserModel, type: str = Query(None)):
     try:
         user_id = id
     except ValueError:
@@ -130,7 +130,7 @@ async def update_single_user(id: str, user_data: UserModel, type: str = Query(..
                     "data": str(updated_user["_id"]),
                 }
                 token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-                print("THE TOKEN IS",{"token": token, "user": updated_user})
+                print("THE TOKEN IS", {"token": token, "user": updated_user})
                 return {"token": token, "user": updated_user}
             else:
                 return updated_user

@@ -17,7 +17,10 @@ class TaskModel(BaseModel):
     title: Optional[str] = Field(None)
     description: Optional[str] = Field(None)
     due_date: Optional[datetime] = Field(None)
-    location: Optional[str] = Field(None)
+    country: Optional[str] = Field(None)
+    state: Optional[str] = Field(None)
+    city: Optional[str] = Field(None)
+    address: Optional[str] = Field(None)
     priority: Optional[str] = Field(None)
     volunteer_id: Optional[str] = Field(None)  # Storing volunteer_id as UUID
     assignees: Optional[List[AssigneeModel]] = []
