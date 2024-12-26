@@ -90,9 +90,28 @@ async def getSingleComment(id: str):
 
 async def updateComment(comment_id: str, update_data: dict):
     try:
-        collection.update_one({"_id": comment_id}, {"$set": update_data})
+        comment_dict = update_data.dict(by_alias=True)
+        filter_data = {
+            k: v for k, v in comment_dict.items() if v is not None and k != "_id"
+        }
+
+        if filter_data:
+            await collection.update_one({"_id": comment_id}, {"$set": filter_data})
+
+        return await getSingleComment(comment_id)
+
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+
+async def deleteSingleComment(comment_id):
+    try:
+       result=await collection.delete_one({"_id": comment_id})
+       return result.deleted_count == 1
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail="An error occurred while deleting comments."
+        )
 
 
 async def delete_comments(task_id: str, user_ids: list[str]):
