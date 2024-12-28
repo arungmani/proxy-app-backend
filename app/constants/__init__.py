@@ -1,4 +1,4 @@
-from .app_constants import FRONTEND_URL
+from .email_templates import EMAIL_TEMPLATES
+from .queueConstants import NOTIFCATION_QUEUE
 
-
-__all__ = ["FRONTEND_URL"]
+__all__ = ["EMAIL_TEMPLATES", "NOTIFCATION_QUEUE"]

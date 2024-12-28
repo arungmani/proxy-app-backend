@@ -62,13 +62,14 @@ async def get_user_by_id(user_id: str):
 
 
 async def update_user_by_id(user_id: UUID, update_data: dict, type: str):
-    print("THE UPDATED DAATA FOR",update_data)
+    print("THE UPDATED DAATA FOR", update_data)
     if type == "complete_profile":
         salt = bcrypt.gensalt()
         hashed_password = bcrypt.hashpw(
             update_data.get("password").encode("utf-8"), salt
         )
         update_data["password"] = hashed_password.decode("utf-8")
+
     result = await collection.update_one({"_id": user_id}, {"$set": update_data})
     if result.modified_count == 1:
         return await get_user_by_id(user_id)
@@ -109,7 +110,7 @@ async def update_user_ratings(
     avg_rating = sum(entry["rating"] for entry in ratingsData) / len(ratingsData)
 
     update_result = await update_user_by_id(
-        ratedTo, {ratings_field: ratingsData, avg_field: avg_rating}
+        ratedTo, {ratings_field: ratingsData, avg_field: avg_rating}, None
     )
 
     return update_result

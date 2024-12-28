@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import user
 from app.routes import task
-from app.routes import commentRoutes
+from app.routes import comments
 import socketio
 from app.services.queueService import consume_queue
 from app.services.socket import sio
@@ -27,7 +27,7 @@ app.add_middleware(
 
 app.include_router(user.router, prefix="/api/v1")
 app.include_router(task.router, prefix="/api/v1")
-app.include_router(commentRoutes.router, prefix="/api/v1")
+app.include_router(comments.router, prefix="/api/v1")
 
 
 # wrap with ASGI application
@@ -41,4 +41,5 @@ consumer_thread.daemon = (
     True  # This ensures the thread exits when the main program does
 )
 consumer_thread.start()
+
 

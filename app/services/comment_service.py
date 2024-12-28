@@ -45,6 +45,8 @@ async def getComments(task_id: str, parent_id: Optional[str] = None):
         # Add parent_id conditionally
         if parent_id is not None:
             match_filter["parent_id"] = parent_id
+        else:
+            match_filter["parent_id"] = None
 
         # Define the aggregation pipeline
         pipeline = [{"$match": match_filter}, {"$sort": {"created_at": DESCENDING}}]
@@ -90,12 +92,14 @@ async def getSingleComment(id: str):
 
 async def updateComment(comment_id: str, update_data: dict):
     try:
-        comment_dict = update_data.dict(by_alias=True)
-        filter_data = {
-            k: v for k, v in comment_dict.items() if v is not None and k != "_id"
-        }
+        print("the updated data is", update_data, comment_id)
 
+        filter_data = {
+            k: v for k, v in update_data.items() if v is not None and k != "_id"
+        }
+        print("THE FILTERED DATA IS", filter_data)
         if filter_data:
+
             await collection.update_one({"_id": comment_id}, {"$set": filter_data})
 
         return await getSingleComment(comment_id)
@@ -106,8 +110,8 @@ async def updateComment(comment_id: str, update_data: dict):
 
 async def deleteSingleComment(comment_id):
     try:
-       result=await collection.delete_one({"_id": comment_id})
-       return result.deleted_count == 1
+        result = await collection.delete_one({"_id": comment_id})
+        return result.deleted_count == 1
     except Exception as e:
         raise HTTPException(
             status_code=500, detail="An error occurred while deleting comments."

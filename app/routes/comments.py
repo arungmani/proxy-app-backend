@@ -49,7 +49,8 @@ async def list_user_comments(
 @router.put("/comment/update/{comment_id}")
 async def update_comment(comment_id: str, data: CommentsModel):
     try:
-        result = await updateComment(comment_id, data)
+        comment_dict = data.dict(by_alias=True)
+        result = await updateComment(comment_id, comment_dict)
         print("THE UPDATED DATA IS", result)
         return result
     except Exception as e:

@@ -19,7 +19,7 @@ from app.constants import *
 from datetime import datetime
 from datetime import timedelta
 import jwt
-
+import os
 
 from pydantic import BaseModel, Field
 
@@ -42,15 +42,15 @@ class RatingReqModel(BaseModel):
 
 @router.post("/auth/register", response_model=UserModel)
 async def user_registration(data: UserModel):
+    FRONTEND_URL = os.getenv("FRONTEND_URL")
     registered_user = await create_user(data)
     print("THE REGISTER USER IS", registered_user)
     placeholders = {
         "name": data.first_name + " " + data.last_name,
-        "link": FRONTEND_URL
-        + "/#/auth/signup?mode=complete_profile&"
-        + registered_user["_id"],
+        "link": FRONTEND_URL + "/#/auth/signup?mode=complete_profile&"
+        "id=" + registered_user["_id"],
     }
-    # sendEmail(data.email, "complete_profile", placeholders)
+    sendEmail(data.email, "complete_profile", placeholders)
     return registered_user
 
 

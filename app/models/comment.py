@@ -15,7 +15,7 @@ class CommentsModel(BaseModel):
     parent_id: Optional[str] = Field(None)
     hasReplies: Optional[bool] = Field(
         default=False
-    )  # using the isReplies field to indicate that a message has replies,
+    )  # using the hasReplies field to indicate that a message has replies,
     created_at: Optional[int] = Field(
         default_factory=lambda: int(datetime.now().timestamp())
     )

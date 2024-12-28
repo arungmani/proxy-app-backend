@@ -2,8 +2,9 @@ from app.models.task import TaskModel
 from app.db.database import db
 from uuid import UUID
 from app.services.user_service import get_user_by_id
-from app.services.queueService import add_data_to_notification_queue
+from app.services.queueService import add_data_to_queue
 from app.services.user_service import list_users
+from app.constants import *
 
 
 collection = db.get_collection("tasks_collection")
@@ -95,9 +96,7 @@ async def get_task_by_id(task_id: str):
 
 
 async def update_task_by_id(task_id: str, update_data: dict):
-    print("UPDATED DATA", task_id)
-    
-    result = await collection.update_one({"_id": task_id}, update_data)
+    await collection.update_one({"_id": task_id}, update_data)
     return await  get_task_by_id(task_id)
 
 
@@ -129,6 +128,6 @@ async def notificationHandler(task, user_id, sid):
     print("The data is", data_instance.__dict__)
 
     # Add data to the queue and show message and send message to online customers
-    add_data_to_notification_queue(data_instance)
+    add_data_to_queue(data_instance,NOTIFCATION_QUEUE)
 
     return

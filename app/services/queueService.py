@@ -10,7 +10,7 @@ import os
 
 def connectRabbitMq():
     try:
-        ip_address=os.getenv("IP_ADDRESS")
+        ip_address = os.getenv("IP_ADDRESS")
         connection = pika.BlockingConnection(pika.ConnectionParameters(ip_address))
         channel = connection.channel()
         return channel, connection
@@ -19,19 +19,17 @@ def connectRabbitMq():
         return None, None  # Return None if connection fails
 
 
-def add_data_to_notification_queue(data_instance):
+def add_data_to_queue(data_instance, queue):
     channel, connection = connectRabbitMq()
     if not channel or not connection:
         print("Failed to connect to RabbitMQ. Cannot send message.")
         return
 
     try:
-        channel.queue_declare(queue="notification_queue")
-        message = json.dumps(data_instance.__dict__)
-        channel.basic_publish(
-            exchange="", routing_key="notification_queue", body=message
-        )
-        print(" [x] Sent message:", message)
+        channel.queue_declare(queue=queue)
+        data = json.dumps(data_instance.__dict__)
+        channel.basic_publish(exchange="", routing_key=queue, body=data)
+        print(" [x] Sent message:", data)
     except pika.exceptions.AMQPError as e:
         print(f"Failed to publish message: {e}")
     finally:
