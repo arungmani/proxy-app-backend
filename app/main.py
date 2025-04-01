@@ -9,6 +9,7 @@ from app.services.socket import sio
 from app.services.redisService import client
 import threading
 from app.services.email_service import sendEmail
+import os
 
 
 app = FastAPI(
