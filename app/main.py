@@ -10,6 +10,7 @@ from app.services.redisService import client
 import threading
 from app.services.email_service import sendEmail
 import os
+from app.db.database import initialize_indexes
 
 
 app = FastAPI(
@@ -42,5 +43,10 @@ consumer_thread.daemon = (
     True  # This ensures the thread exits when the main program does
 )
 consumer_thread.start()
+
+
+@app.on_event("startup")
+async def startup_db_client():
+    await initialize_indexes()
 
 
