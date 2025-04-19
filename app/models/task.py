@@ -12,6 +12,11 @@ class AssigneeModel(BaseModel):
     first_name: str
     last_name: str
     _id: str
+    
+class LocationModel(BaseModel):
+    type: str = "Point"
+    coordinates: List[float]  # [longitude, latitude]
+
 
 
 class TaskModel(BaseModel):

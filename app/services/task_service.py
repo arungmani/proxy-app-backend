@@ -26,13 +26,14 @@ async def list_tasks(
     latitude: Optional[float] = None,
     radius_km: int = 30,
 ):
-    print(user, type)
+    print("user, type,latitude,longitude", user, type, latitude, longitude)
 
     # Define a base query
     query = {}
 
     # Modify the query based on the "type"
     if type == "all_tasks":
+
         query = {
             "$and": [
                 {"created_by": {"$ne": user}},
