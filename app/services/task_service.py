@@ -5,6 +5,7 @@ from app.services.user_service import get_user_by_id
 from app.services.queueService import add_data_to_queue
 from app.services.user_service import list_users
 from app.constants import *
+from typing import Optional
 
 
 collection = db.get_collection("tasks_collection")
@@ -18,14 +19,21 @@ async def create_task(task_data: TaskModel, sid: str):
     return await collection.find_one({"_id": result.inserted_id})
 
 
-async def list_tasks(user: str, type: str):
-    print(user, type)
+async def list_tasks(
+    user: str,
+    type: str,
+    longitude: Optional[float] = None,
+    latitude: Optional[float] = None,
+    radius_km: int = 30,
+):
+    print("user, type,latitude,longitude", user, type, latitude, longitude)
 
     # Define a base query
     query = {}
 
     # Modify the query based on the "type"
     if type == "all_tasks":
+
         query = {
             "$and": [
                 {"created_by": {"$ne": user}},
@@ -55,6 +63,24 @@ async def list_tasks(user: str, type: str):
         # Optionally, handle unknown types
         raise ValueError(f"Unknown task type: {type}")
 
+    if longitude is not None and latitude is not None:
+
+        location_query = {
+            "location": {
+                "$near": {
+                    "$geometry": {
+                        "type": "Point",
+                        "coordinates": [longitude, latitude],
+                    },
+                    "$maxDistance": radius_km * 1000,  # Convert km to meters
+                }
+            }
+        }
+        if len(query) > 0:
+            query = {"$and": [query, location_query]}
+        else:
+            query = location_query
+    print("query", query)
     # Execute the query
     tasks = await collection.find(query).sort("created_on", -1).to_list(length=100)
     # print("THE TASKS IS", tasks)
@@ -63,7 +89,7 @@ async def list_tasks(user: str, type: str):
 
 
 async def get_task_by_id(task_id: str):
-    print("the task id is ",task_id)
+    print("the task id is ", task_id)
 
     pipeline = [
         {"$match": {"_id": task_id}},
@@ -97,7 +123,7 @@ async def get_task_by_id(task_id: str):
 
 async def update_task_by_id(task_id: str, update_data: dict):
     await collection.update_one({"_id": task_id}, update_data)
-    return await  get_task_by_id(task_id)
+    return await get_task_by_id(task_id)
 
 
 async def delete_task_by_id(task_id: str):
@@ -128,6 +154,6 @@ async def notificationHandler(task, user_id, sid):
     print("The data is", data_instance.__dict__)
 
     # Add data to the queue and show message and send message to online customers
-    add_data_to_queue(data_instance,NOTIFCATION_QUEUE)
+    add_data_to_queue(data_instance, NOTIFCATION_QUEUE)
 
     return

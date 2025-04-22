@@ -14,6 +14,7 @@ from app.common.helper import verify_jwt
 from app.services.queueService import consume_queue
 from app.services.comment_service import delete_comments
 from app.services.user_service import get_user_by_id
+from typing import Optional
 
 router = APIRouter(tags=["Task"], responses={404: {"description": "Not found"}})
 
@@ -35,8 +36,22 @@ async def register_task(
 
 
 @router.get("/task/list/{type}", response_model=List[TaskModel])
-async def list_all_tasks(type: str, user: dict = Depends(verify_jwt)):
-    tasks = await list_tasks(user, type)
+async def list_all_tasks(
+    type: str,
+    lat: Optional[float] = Query(
+        None, description="Latitude for location-based filtering"
+    ),
+    lng: Optional[float] = Query(
+        None, description="Longitude for location-based filtering"
+    ),
+    radius_km: Optional[int] = Query(
+        30, description="Search radius in kilometers (default: 30)"
+    ),
+    user: dict = Depends(verify_jwt),
+):
+    tasks = await list_tasks(
+        user, type, latitude=lat, longitude=lng, radius_km=radius_km
+    )
     return tasks
 
 
@@ -74,7 +89,7 @@ async def update_single_task(
     user: dict = Depends(verify_jwt),
 ):
     try:
-        user_id =  user
+        user_id = user
         task = await get_task_by_id(id)
 
         if not task:
@@ -101,9 +116,7 @@ async def update_single_task(
                     detail="User already assigned or max assignees reached (3)",
                 )
             ),
-            "unassign": lambda: {
-                  "$pull": {"assignees": {"_id": user_id}}
-            },
+            "unassign": lambda: {"$pull": {"assignees": {"_id": user_id}}},
             "remove_volunteer": lambda: {
                 "$set": {"volunteer_id": None, "status": "PENDING_APPROVAL"}
             },

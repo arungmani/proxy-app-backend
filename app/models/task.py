@@ -7,10 +7,17 @@ from typing import List
 
 import uuid
 
+
 class AssigneeModel(BaseModel):
     first_name: str
     last_name: str
     _id: str
+    
+class LocationModel(BaseModel):
+    type: str = "Point"
+    coordinates: List[float]  # [longitude, latitude]
+
+
 
 class TaskModel(BaseModel):
     id: Optional[str] = Field(default_factory=uuid.uuid4, alias="_id")
@@ -33,6 +40,7 @@ class TaskModel(BaseModel):
     remarks: Optional[str] = Field(None)
     is_completed: bool = Field(default=False)
     status: Optional[str] = Field(None)
+    location: Optional[object] = Field(None)
 
     class Config:
         allow_population_by_field_name = True
