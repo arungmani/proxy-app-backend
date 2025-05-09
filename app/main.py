@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI,Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import user
 from app.routes import task
@@ -11,6 +11,10 @@ import threading
 from app.services.email_service import sendEmail
 import os
 from app.db.database import initialize_indexes
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+from fastapi.responses import FileResponse
+
 
 
 app = FastAPI(
@@ -18,6 +22,13 @@ app = FastAPI(
     description="A simple FastAPI application with MongoDB integration",
     version="1.0.0",
 )
+
+# Get the absolute path to the frontend build directory
+
+
+
+
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,6 +41,17 @@ app.add_middleware(
 app.include_router(user.router, prefix="/api/v1")
 app.include_router(task.router, prefix="/api/v1")
 app.include_router(comments.router, prefix="/api/v1")
+
+# Serve the main index.html for SPA routing
+@app.get("/{full_path:path}")
+async def serve_spa(request: Request, full_path: str):
+    # If the path is an API route, let it be handled by the API routers
+    if full_path.startswith("api/"):
+        return None
+        
+    # Otherwise serve the index.html for SPA routing
+    return FileResponse("/app/frontend/build/index.html")
+
 
 
 # wrap with ASGI application
@@ -48,5 +70,3 @@ consumer_thread.start()
 @app.on_event("startup")
 async def startup_db_client():
     await initialize_indexes()
-
-
