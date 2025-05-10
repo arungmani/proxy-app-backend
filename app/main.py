@@ -23,11 +23,6 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# Get the absolute path to the frontend build directory
-
-
-
-
 
 
 app.add_middleware(
