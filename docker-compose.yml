@@ -6,10 +6,10 @@ services:
     container_name: fastapi_app
     ports:
       - "8000:8000"
-    depends_on:
-      - mongo
-      - rabbitmq
-      - redis  # Add Redis as a dependency
+    # depends_on:
+    #   - mongo
+    #   - rabbitmq
+    #   - redis  # Add Redis as a dependency
     env_file:
       - .env
      
