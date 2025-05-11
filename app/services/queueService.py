@@ -11,14 +11,26 @@ import os
 def connectRabbitMq():
     try:
         ip_address = os.getenv("IP_ADDRESS")
-        connection = pika.BlockingConnection(pika.ConnectionParameters(ip_address))
+        username = os.getenv("RABBITMQ_USERNAME")  # Default to 'guest'
+        password = os.getenv("RABBITMQ_PASSWORD")  # Default to 'guest'
+        
+        print(f"Connecting to RabbitMQ at: {ip_address} as {username}")
+        
+        credentials = pika.PlainCredentials(username, password)
+        parameters = pika.ConnectionParameters(
+            host=ip_address,
+            credentials=credentials
+        )
+        
+        connection = pika.BlockingConnection(parameters)
         channel = connection.channel()
         return channel, connection
+        
     except pika.exceptions.AMQPConnectionError as e:
         print(f"Connection to RabbitMQ failed: {e}. Retrying...")
-        return None, None  # Return None if connection fails
-
-
+        return None, None
+    
+    
 def add_data_to_queue(data_instance, queue):
     channel, connection = connectRabbitMq()
     if not channel or not connection:
