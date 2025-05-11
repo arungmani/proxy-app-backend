@@ -1,4 +1,4 @@
-from fastapi import FastAPI,Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes import user
 from app.routes import task
@@ -16,13 +16,11 @@ from pathlib import Path
 from fastapi.responses import FileResponse
 
 
-
 app = FastAPI(
     title="FastAPI with MongoDB",
     description="A simple FastAPI application with MongoDB integration",
     version="1.0.0",
 )
-
 
 
 app.add_middleware(
@@ -37,16 +35,12 @@ app.include_router(user.router, prefix="/api/v1")
 app.include_router(task.router, prefix="/api/v1")
 app.include_router(comments.router, prefix="/api/v1")
 
-# Serve the main index.html for SPA routing
-@app.get("/{full_path:path}")
-async def serve_spa(request: Request, full_path: str):
-    # If the path is an API route, let it be handled by the API routers
-    if full_path.startswith("api/"):
-        return None
-        
-    # Otherwise serve the index.html for SPA routing
-    return FileResponse("/app/frontend/build/index.html")
 
+# Serve the main index.html for SPA routing
+@app.get("/")
+async def checkTest(request: Request):
+
+    return "Hello from API route"
 
 
 # wrap with ASGI application
